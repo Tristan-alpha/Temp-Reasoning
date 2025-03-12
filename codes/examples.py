@@ -164,7 +164,7 @@ def get_results(args, question, reasoning_steps):
     solution_level_validity_scores = min(step_level_validity_scores)
     print(f"solution_level_validity_scores: {solution_level_validity_scores}")
     solution_level_redundancy_scores = max(step_level_redundancy_scores)
-    print(f"solution_level_validity_scores: {solution_level_redundancy_scores}")
+    print(f"solution_level_redundancy_scores: {solution_level_redundancy_scores}")
 
 
 if __name__ == "__main__":
