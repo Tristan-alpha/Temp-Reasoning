@@ -189,16 +189,30 @@ def main(args):
     ).to(device)
     shepherd_model.eval()
     
-    # Create empty DataFrame to store results
-    results_df = pd.DataFrame(columns=[
-        'Model', 'Temperature', 'Question_UUID', 
-        'Solution_Level_Validity', 'Solution_Level_Redundancy',
-        'Solution_Score_Shepherd'
-    ])
+    # Dictionary to store results for all models
+    all_model_results = {}
     
     # Process each model
     for model_name in models_to_evaluate:
         print(f"Evaluating {model_name}...")
+        
+        # Check if detailed CSV already exists and load it
+        detailed_csv_path = os.path.join(args.output_dir, f'{model_name}_detailed.csv')
+        if os.path.exists(detailed_csv_path):
+            print(f"Loading existing detailed results for {model_name}...")
+            results_df = pd.read_csv(detailed_csv_path)
+            # Get list of already processed temperature-uuid combinations to avoid duplicates
+            processed_temp_uuids = set()
+            for _, row in results_df.iterrows():
+                processed_temp_uuids.add((row['Temperature'], row['Question_UUID']))
+        else:
+            # Create empty DataFrame if no existing file
+            results_df = pd.DataFrame(columns=[
+                'Model', 'Temperature', 'Question_UUID', 
+                'Solution_Level_Validity', 'Solution_Level_Redundancy',
+                'Solution_Score_Shepherd'
+            ])
+            processed_temp_uuids = set()
         
         for temp in temperatures:
             print(f"  Temperature: {temp}")
@@ -211,6 +225,11 @@ def main(args):
             # Process each solution
             for item in tqdm(results):
                 uuid = item.get("uuid", "unknown")
+                
+                # Skip if this temperature-uuid combination has already been processed
+                if (temp, uuid) in processed_temp_uuids:
+                    continue
+                
                 question = item.get("question", "")
                 steps = item.get("model_output_steps", [])
                 
@@ -235,55 +254,79 @@ def main(args):
                         'Question_UUID': uuid,
                         'Solution_Level_Validity': solution_validity,
                         'Solution_Level_Redundancy': solution_redundancy,
-                        'Solution_Score_Shepherd': solution_shepherd_score  # Now correctly a scalar value
+                        'Solution_Score_Shepherd': solution_shepherd_score
                     }
                     
                     results_df = pd.concat([results_df, pd.DataFrame([new_row])], ignore_index=True)
                     
                 except Exception as e:
                     print(f"Error evaluating solution {uuid}: {str(e)}")
+        
+        # Save detailed results for this model
+        results_df.to_csv(detailed_csv_path, index=False)
+        print(f"Saved detailed results for {model_name}")
+        
+        # Store in our dictionary for aggregation later
+        all_model_results[model_name] = results_df
     
-    # Skip saving if no results
-    if results_df.empty:
-        print("No results to save. Exiting.")
+    # After processing all models, create combined DataFrame and calculate aggregated metrics
+    combined_results_df = pd.concat([df for df in all_model_results.values()], ignore_index=True)
+    
+    # Skip aggregation if no results
+    if combined_results_df.empty:
+        print("No results to aggregate. Exiting.")
         return
     
-    # Save detailed results
-    results_df.to_csv(os.path.join(args.output_dir, f'{model_name}_detailed.csv'), index=False)
-    
     # Aggregate results by model and temperature
-    agg_results = results_df.groupby(['Model', 'Temperature']).agg({
+    for model_name, model_df in all_model_results.items():
+        if not model_df.empty:
+            agg_results = model_df.groupby(['Model', 'Temperature']).agg({
+                'Solution_Level_Validity': 'mean',
+                'Solution_Level_Redundancy': 'mean',
+                'Solution_Score_Shepherd': 'mean'
+            }).reset_index()
+            
+            # Save aggregated results
+            agg_csv_path = os.path.join(args.output_dir, f'{model_name}_aggregated.csv')
+            agg_results.to_csv(agg_csv_path, index=False)
+            print(f"Saved aggregated results for {model_name}")
+    
+    # Create overall aggregated results
+    overall_agg_results = combined_results_df.groupby(['Model', 'Temperature']).agg({
         'Solution_Level_Validity': 'mean',
         'Solution_Level_Redundancy': 'mean',
-        'Solution_Score_Shepherd': 'mean'  # Percentage of correct answers
+        'Solution_Score_Shepherd': 'mean'
     }).reset_index()
     
-    agg_results.to_csv(os.path.join(args.output_dir, f'{model_name}_aggregated.csv'), index=False)
+    # Save overall aggregated results
+    overall_agg_csv_path = os.path.join(args.output_dir, 'all_models_aggregated.csv')
+    overall_agg_results.to_csv(overall_agg_csv_path, index=False)
+    print(f"Saved overall aggregated results")
     
     # Create visualizations
     plt.figure(figsize=(15, 10))
     
     # Validity Score
     plt.subplot(2, 2, 1)
-    sns.lineplot(data=agg_results, x='Temperature', y='Solution_Level_Validity', hue='Model', marker='o')
+    sns.lineplot(data=overall_agg_results, x='Temperature', y='Solution_Level_Validity', hue='Model', marker='o')
     plt.title('Average Validity Score vs Temperature')
     plt.grid(True)
     
     # Redundancy Score
     plt.subplot(2, 2, 2)
-    sns.lineplot(data=agg_results, x='Temperature', y='Solution_Level_Redundancy', hue='Model', marker='o')
+    sns.lineplot(data=overall_agg_results, x='Temperature', y='Solution_Level_Redundancy', hue='Model', marker='o')
     plt.title('Average Redundancy Score vs Temperature')
     plt.grid(True)
     
     # Correctness
     plt.subplot(2, 2, 3)
-    sns.lineplot(data=agg_results, x='Temperature', y='Solution_Score_Shepherd', hue='Model', marker='o')
+    sns.lineplot(data=overall_agg_results, x='Temperature', y='Solution_Score_Shepherd', hue='Model', marker='o')
     plt.title('Answer Correctness vs Temperature')
     plt.grid(True)
     
     # Combined Bar Chart
     plt.subplot(2, 2, 4)
-    bar_data = agg_results.melt(id_vars=['Model', 'Temperature'], 
+    bar_data = overall_agg_results.melt(id_vars=['Model', 'Temperature'], 
                                value_vars=['Solution_Level_Validity', 'Solution_Level_Redundancy', 'Solution_Score_Shepherd'],
                                var_name='Metric', value_name='Score')
     sns.barplot(data=bar_data, x='Temperature', y='Score', hue='Metric', col='Model')
@@ -295,27 +338,28 @@ def main(args):
     
     # Create separate plots for each model for better clarity
     for model in models_to_evaluate:
-        model_data = agg_results[agg_results['Model'] == model]
-        
-        plt.figure(figsize=(15, 5))
-        
-        # Plot all metrics for this model
-        plt.subplot(1, 2, 1)
-        model_melted = model_data.melt(id_vars=['Temperature'], 
-                                     value_vars=['Solution_Level_Validity', 'Solution_Level_Redundancy', 'Solution_Score_Shepherd'],
-                                     var_name='Metric', value_name='Score')
-        sns.lineplot(data=model_melted, x='Temperature', y='Score', hue='Metric', marker='o')
-        plt.title(f'{model} - Metrics vs Temperature')
-        plt.grid(True)
-        
-        # Bar chart
-        plt.subplot(1, 2, 2)
-        sns.barplot(data=model_melted, x='Temperature', y='Score', hue='Metric')
-        plt.title(f'{model} - Metrics Comparison')
-        
-        plt.tight_layout()
-        plt.savefig(os.path.join(args.output_dir, f'temperature_evaluation_{model}.png'))
-        plt.close()
+        if model in all_model_results and not all_model_results[model].empty:
+            model_data = overall_agg_results[overall_agg_results['Model'] == model]
+            
+            plt.figure(figsize=(15, 5))
+            
+            # Plot all metrics for this model
+            plt.subplot(1, 2, 1)
+            model_melted = model_data.melt(id_vars=['Temperature'], 
+                                        value_vars=['Solution_Level_Validity', 'Solution_Level_Redundancy', 'Solution_Score_Shepherd'],
+                                        var_name='Metric', value_name='Score')
+            sns.lineplot(data=model_melted, x='Temperature', y='Score', hue='Metric', marker='o')
+            plt.title(f'{model} - Metrics vs Temperature')
+            plt.grid(True)
+            
+            # Bar chart
+            plt.subplot(1, 2, 2)
+            sns.barplot(data=model_melted, x='Temperature', y='Score', hue='Metric')
+            plt.title(f'{model} - Metrics Comparison')
+            
+            plt.tight_layout()
+            plt.savefig(os.path.join(args.output_dir, f'temperature_evaluation_{model}.png'))
+            plt.close()
         
     print("Evaluation complete. Results and visualizations saved.")
 
