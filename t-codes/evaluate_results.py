@@ -199,7 +199,7 @@ def main(args):
         print(f"Evaluating {model_name}...")
         
         # Check if detailed CSV already exists and load it
-        detailed_csv_path = os.path.join(args.output_dir, f'{model_name}_{dataset_name}_detailed.csv')
+        detailed_csv_path = os.path.join(args.output_dir, model_name, dataset_name, 'detailed.csv')
         if os.path.exists(detailed_csv_path):
             print(f"Loading existing detailed results for {model_name} on {dataset_name}...")
             results_df = pd.read_csv(detailed_csv_path)
@@ -272,13 +272,6 @@ def main(args):
         # Store in our dictionary for aggregation later
         all_model_results[model_name] = results_df
     
-    # After processing all models, create combined DataFrame and calculate aggregated metrics
-    combined_results_df = pd.concat([df for df in all_model_results.values()], ignore_index=True)
-    
-    # Skip aggregation if no results
-    if combined_results_df.empty:
-        print("No results to aggregate. Exiting.")
-        return
     
     # Aggregate results by model and temperature
     for model_name, model_df in all_model_results.items():
@@ -294,19 +287,6 @@ def main(args):
             agg_results.to_csv(agg_csv_path, index=False)
             print(f"Saved aggregated results for {model_name} on {dataset_name}")
     
-    # Create overall aggregated results
-    overall_agg_results = combined_results_df.groupby(['Model', 'Dataset', 'Temperature']).agg({
-        'Solution_Level_Validity': 'mean',
-        'Solution_Level_Redundancy': 'mean',
-        'Solution_Score_Shepherd': 'mean'
-    }).reset_index()
-    
-    # Save overall aggregated results
-    overall_agg_csv_path = os.path.join(args.output_dir, f'all_models_{dataset_name}_aggregated.csv')
-    overall_agg_results.to_csv(overall_agg_csv_path, index=False)
-    print(f"Saved overall aggregated results for {dataset_name}")
-    
-
     print("Evaluation complete.")
 
 if __name__ == "__main__":

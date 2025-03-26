@@ -1,3 +1,3 @@
-Model,Best Temperature,Best Shepherd Score,Corresponding Validity,Corresponding Redundancy
-Abel-7B-002,0.6,0.6323193969726563,0.7471911705387756,0.1895846264474093
-WizardMath-7B-V1.1,0.3,0.6665462341308593,0.7930719743954251,0.1369422830138355
+Model,Best Temperature,Best Shepherd Score,Corresponding Validity,Corresponding Redundancy,Dataset
+Abel-7B-002,0.6,0.6323193969726563,0.7471911705387756,0.1895846264474093,mr-gsm8k
+WizardMath-7B-V1.1,0.2,0.6762525329589844,0.7957559853843413,0.1344368615467101,mr-gsm8k
