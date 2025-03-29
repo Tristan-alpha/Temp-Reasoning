@@ -128,15 +128,17 @@ def main(args):
             counter = 0
             results = []
             
-
             for item in tqdm(dataset):
-                if dataset_name == "math":
+                # Determine the source of the problem (math or mr-gsm8k)
+                source = item.get("source", "")
+                
+                # Use appropriate fields based on the source
+                if source == "math" or dataset_name == "math":
                     uuid = item.get("unique_id", "unknown")
                     question = item.get("problem", "")
-                else:
+                else:  # source == "mr-gsm8k" or default to mr-gsm8k format
                     uuid = item.get("uuid", "unknown")
                     question = item.get("question", "")
-
                 
                 if not question:
                     print(f"Skipping item {uuid} as it has no question")
@@ -147,10 +149,11 @@ def main(args):
                 try:
                     solution_steps = generate_solution(model, tokenizer, question, temp, device)
                     
-                    # Create result object with only uuid, question and model_output_steps
+                    # Create result object with only uuid, question, source and model_output_steps
                     result = {
                         "uuid": uuid,
                         "question": question,
+                        "source": source,
                         "model_output_steps": solution_steps
                     }
                     
@@ -174,8 +177,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate solutions with different temperature settings')
     parser.add_argument("--input_path", type=str, default="/home/dazhou/ReasonEval/dataset",
                         help="Path to the input dataset (dataset name will be extracted from filename if --dataset_name not provided)")
-    parser.add_argument("--dataset_name", type=str, default="mr-gsm8k",
-                        help="Name of the dataset being processed (defaults to filename from input_path)")
+    parser.add_argument("--dataset_name", type=str, default="hybrid_reasoning",
+                        help="Name of the dataset being processed (defaults to hybrid_reasoning)")
     parser.add_argument("--output_dir", type=str, default="/home/dazhou/ReasonEval/answer_by_models",
                         help="Directory to save the results")
     parser.add_argument("--models", type=str, nargs='+', 

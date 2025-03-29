@@ -8,12 +8,62 @@ import seaborn as sns
 import pandas as pd
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import MistralModel, MistralPreTrainedModel, LlamaModel, LlamaPreTrainedModel, AutoTokenizer
+from transformers.configuration_utils import PretrainedConfig
+import torch
+import torch.nn as nn
 
 
 reasoneval_path = "/home/dazhou/ReasonEval/codes"
 sys.path.append(reasoneval_path)
 # Import ReasonEval model classes from the examples
-from examples import ReasonEval_7B
+
+class ReasonEval_7B(MistralPreTrainedModel):
+    _keys_to_ignore_on_load_missing = ['lm_head.weight']
+
+    def __init__(self, config: PretrainedConfig) -> None:
+        super().__init__(config)
+        self.model = MistralModel(config)
+        self.score_head = nn.Linear(config.hidden_size, config.score_dimension, bias=config.use_bias)
+        self.post_init()  # Initialize weights and apply final processing
+
+    def forward(
+        self,
+        input_ids: torch.LongTensor,
+        attention_mask: torch.Tensor,
+        position_ids: torch.LongTensor | None = None,
+        past_key_values: list[torch.FloatTensor] | None = None,
+        inputs_embeds: torch.FloatTensor | None = None,
+        use_cache: bool | None = None,
+        output_attentions: bool | None = None,
+        output_hidden_states: bool | None = None,
+        return_dict: bool | None = None,
+    ) -> torch.Tensor:
+        assert attention_mask is not None
+        output_attentions = (
+            output_attentions if output_attentions is not None else self.config.output_attentions
+        )
+        output_hidden_states = (
+            output_hidden_states
+            if output_hidden_states is not None
+            else self.config.output_hidden_states
+        )
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        outputs = self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            past_key_values=past_key_values,
+            inputs_embeds=inputs_embeds,
+            use_cache=use_cache,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+        hidden_states = outputs[0]  # (batch_size, sequence_length, dim)
+        scores = self.score_head(hidden_states)  # (batch_size, sequence_length, class)
+        return scores
+    
 
 def load_temperature_results(results_dir, model_name, dataset_name, temperature):
     """Load the results for a specific model and temperature"""
@@ -156,7 +206,14 @@ def main(args):
     # Define the model paths
     model_paths = {
         'Abel-7B-002': 'GAIR/Abel-7B-002',
-        'WizardMath-7B-V1.1': 'WizardLMTeam/WizardMath-7B-V1.1'
+        'WizardMath-7B-V1.1': 'WizardLMTeam/WizardMath-7B-V1.1',
+        'o1': 'o1',
+        'o3-mini': 'o3-mini',
+        'deepseek-v3': 'deepseek-v3',
+        'deepseek-r1': 'deepseek-r1',
+        'claude-3-7-sonnet-20250219': 'claude-3-7-sonnet-20250219',
+        'gemini-2.0-flash': 'gemini-2.0-flash',
+        'grok-3-reasoner': 'grok-3-reasoner'
     }
     
     # Validate requested models
@@ -210,7 +267,7 @@ def main(args):
         else:
             # Create empty DataFrame if no existing file
             results_df = pd.DataFrame(columns=[
-                'Model', 'Dataset', 'Temperature', 'Question_UUID', 
+                'Model', 'Dataset', 'Temperature', 'Question_UUID', 'Source',
                 'Solution_Level_Validity', 'Solution_Level_Redundancy',
                 'Solution_Score_Shepherd'
             ])
@@ -234,6 +291,7 @@ def main(args):
                 
                 question = item.get("question", "")
                 steps = item.get("model_output_steps", [])
+                source = item.get("source", "unknown")
                 
                 if not steps or not question:
                     continue
@@ -255,6 +313,7 @@ def main(args):
                         'Dataset': dataset_name,
                         'Temperature': temp,
                         'Question_UUID': uuid,
+                        'Source': source,
                         'Solution_Level_Validity': solution_validity,
                         'Solution_Level_Redundancy': solution_redundancy,
                         'Solution_Score_Shepherd': solution_shepherd_score
@@ -266,6 +325,7 @@ def main(args):
                     print(f"Error evaluating solution {uuid}: {str(e)}")
         
         # Save detailed results for this model
+        os.makedirs(os.path.dirname(detailed_csv_path), exist_ok=True)
         results_df.to_csv(detailed_csv_path, index=False)
         print(f"Saved detailed results for {model_name} on {dataset_name}")
         
@@ -276,24 +336,37 @@ def main(args):
     # Aggregate results by model and temperature
     for model_name, model_df in all_model_results.items():
         if not model_df.empty:
+            # Calculate overall aggregate metrics
             agg_results = model_df.groupby(['Model', 'Dataset', 'Temperature']).agg({
                 'Solution_Level_Validity': 'mean',
                 'Solution_Level_Redundancy': 'mean',
                 'Solution_Score_Shepherd': 'mean'
             }).reset_index()
             
-            # Save aggregated results
-            agg_csv_path = os.path.join(args.output_dir, f'{model_name}_{dataset_name}_aggregated.csv')
+            # Save overall aggregated results
+            agg_csv_path = os.path.join(args.output_dir, model_name, dataset_name, "aggregated.csv")
             agg_results.to_csv(agg_csv_path, index=False)
             print(f"Saved aggregated results for {model_name} on {dataset_name}")
+            
+            # Calculate source-specific metrics
+            source_agg_results = model_df.groupby(['Model', 'Dataset', 'Temperature', 'Source']).agg({
+                'Solution_Level_Validity': 'mean',
+                'Solution_Level_Redundancy': 'mean',
+                'Solution_Score_Shepherd': 'mean'
+            }).reset_index()
+            
+            # Save source-specific aggregated results
+            source_agg_csv_path = os.path.join(args.output_dir, model_name, dataset_name, "source_aggregated.csv")
+            source_agg_results.to_csv(source_agg_csv_path, index=False)
+            print(f"Saved source-specific aggregated results for {model_name} on {dataset_name}")
     
     print("Evaluation complete.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--results_dir", type=str, default="/home/dazhou/ReasonEval/temperature_study")
+    parser.add_argument("--results_dir", type=str, default="/home/dazhou/ReasonEval/answer_by_models")
     parser.add_argument("--output_dir", type=str, default="/home/dazhou/ReasonEval/evaluation_results")
-    parser.add_argument("--dataset_name", type=str, required=True,
+    parser.add_argument("--dataset_name", type=str, default="hybrid_reasoning",
                         help="Name of the dataset being evaluated")
     parser.add_argument("--reasoneval_path", type=str, default="GAIR/ReasonEval-7B")
     parser.add_argument("--shepherd_path", type=str, default="peiyi9979/math-shepherd-mistral-7b-prm")

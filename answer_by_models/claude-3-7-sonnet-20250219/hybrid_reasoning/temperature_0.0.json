@@ -1,0 +1,53 @@
+[
+  {
+    "uuid": "test/algebra/2259.json",
+    "question": "If $x$ is a positive integer such that $1^x + 2^x + 5^x = 642$, what is the value of $x$?",
+    "source": "math",
+    "level": 1,
+    "model_output_steps": [
+      "Step 1: # Finding the value of $x$ in $1^x + 2^x + 5^x = 642$",
+      "Step 2: Let's solve this step by step:",
+      "Step 3: First, let's simplify the equation $1^x + 2^x + 5^x = 642$.",
+      "Step 4: Since $1^x = 1$ for any value of $x$, we can rewrite the equation as:\n$1 + 2^x + 5^x = 642$",
+      "Step 5: Rearranging to isolate $2^x + 5^x$:\n$2^x + 5^x = 642 - 1 = 641$",
+      "Step 6: Now we need to find a positive integer $x$ such that $2^x + 5^x = 641$.",
+      "Step 7: Let's try some values of $x$ to see if we can find a pattern or solution:",
+      "Step 8: For $x = 1$:\n$2^1 + 5^1 = 2 + 5 = 7$",
+      "Step 9: This is too small.",
+      "Step 10: For $x = 2$:\n$2^2 + 5^2 = 4 + 25 = 29$",
+      "Step 11: This is still too small.",
+      "Step 12: For $x = 3$:\n$2^3 + 5^3 = 8 + 125 = 133$",
+      "Step 13: This is still too small.",
+      "Step 14: For $x = 4$:\n$2^4 + 5^4 = 16 + 625 = 641$",
+      "Step 15: We found it! $2^4 + 5^4 = 641$, which means $1^4 + 2^4 + 5^4 = 1 + 16 + 625 = 642$.",
+      "Step 16: Therefore, the value of $x$ is $4$."
+    ],
+    "original_solution": "# Finding the value of $x$ in $1^x + 2^x + 5^x = 642$\n\nLet's solve this step by step:\n\nFirst, let's simplify the equation $1^x + 2^x + 5^x = 642$.\n\nSince $1^x = 1$ for any value of $x$, we can rewrite the equation as:\n$1 + 2^x + 5^x = 642$\n\nRearranging to isolate $2^x + 5^x$:\n$2^x + 5^x = 642 - 1 = 641$\n\nNow we need to find a positive integer $x$ such that $2^x + 5^x = 641$.\n\nLet's try some values of $x$ to see if we can find a pattern or solution:\n\nFor $x = 1$:\n$2^1 + 5^1 = 2 + 5 = 7$\n\nThis is too small.\n\nFor $x = 2$:\n$2^2 + 5^2 = 4 + 25 = 29$\n\nThis is still too small.\n\nFor $x = 3$:\n$2^3 + 5^3 = 8 + 125 = 133$\n\nThis is still too small.\n\nFor $x = 4$:\n$2^4 + 5^4 = 16 + 625 = 641$\n\nWe found it! $2^4 + 5^4 = 641$, which means $1^4 + 2^4 + 5^4 = 1 + 16 + 625 = 642$.\n\nTherefore, the value of $x$ is $4$.",
+    "tokens": {
+      "prompt_tokens": 70,
+      "completion_tokens": 367,
+      "total_tokens": 437
+    }
+  },
+  {
+    "uuid": "test/algebra/1762.json",
+    "question": "Shooting hoops for 30 minutes burns 150 calories. How many calories would Kendra burn shooting hoops if she shot hoops 30 minutes every day for one week?",
+    "source": "math",
+    "level": 1,
+    "model_output_steps": [
+      "Step 1: # Calories Burned Shooting Hoops",
+      "Step 2: I'll solve this step by step.",
+      "Step 3: First, let's identify what we know:\n- Shooting hoops for 30 minutes burns 150 calories\n- Kendra will shoot hoops for 30 minutes every day for one week",
+      "Step 4: Step 1: Determine how many days are in one week.\nThere are 7 days in one week.",
+      "Step 5: Step 2: Calculate how many calories Kendra burns each day.\nKendra burns 150 calories per 30-minute session.",
+      "Step 6: Step 3: Calculate the total calories burned in one week.\nTotal calories = Calories per day \u00d7 Number of days\nTotal calories = 150 calories \u00d7 7 days\nTotal calories = 1,050 calories",
+      "Step 7: Therefore, Kendra would burn 1,050 calories if she shot hoops for 30 minutes every day for one week."
+    ],
+    "original_solution": "# Calories Burned Shooting Hoops\n\nI'll solve this step by step.\n\nFirst, let's identify what we know:\n- Shooting hoops for 30 minutes burns 150 calories\n- Kendra will shoot hoops for 30 minutes every day for one week\n\nStep 1: Determine how many days are in one week.\nThere are 7 days in one week.\n\nStep 2: Calculate how many calories Kendra burns each day.\nKendra burns 150 calories per 30-minute session.\n\nStep 3: Calculate the total calories burned in one week.\nTotal calories = Calories per day \u00d7 Number of days\nTotal calories = 150 calories \u00d7 7 days\nTotal calories = 1,050 calories\n\nTherefore, Kendra would burn 1,050 calories if she shot hoops for 30 minutes every day for one week.",
+    "tokens": {
+      "prompt_tokens": 67,
+      "completion_tokens": 170,
+      "total_tokens": 237
+    }
+  }
+]
