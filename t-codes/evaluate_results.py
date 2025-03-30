@@ -232,6 +232,19 @@ def evaluate_solution_with_math_shepherd(model, tokenizer, question, reasoning_s
         # and incorrect answers have low scores (~0.02)
         return step_scores, solution_scores  # Convert last tensor element to Python scalar
 
+def load_reasoneval_model(model_path, model_size, device):
+    """Load the appropriate ReasonEval model based on model size"""
+    print(f"Loading ReasonEval-{model_size} model from {model_path}...")
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    
+    if model_size == '34B':
+        model = ReasonEval_34B.from_pretrained(model_path).to(device)
+    else:  # Default to 7B
+        model = ReasonEval_7B.from_pretrained(model_path).to(device)
+    
+    model.eval()
+    return model, tokenizer
+
 def main(args):
 
     # Set CUDA device   
@@ -277,12 +290,9 @@ def main(args):
     
     print(f"Evaluating models: {', '.join(models_to_evaluate)}")
     
-    # Load ReasonEval model
-    print("Loading ReasonEval model...")
+    # Load ReasonEval model with selected size
     reasoneval_path = args.reasoneval_path
-    reasoneval_tokenizer = AutoTokenizer.from_pretrained(reasoneval_path)
-    reasoneval_model = ReasonEval_7B.from_pretrained(reasoneval_path).to(device)
-    reasoneval_model.eval()
+    reasoneval_model, reasoneval_tokenizer = load_reasoneval_model(reasoneval_path, args.model_size, device)
     
     # Load Math-Shepherd model
     print("Loading Math-Shepherd model...")
@@ -417,7 +427,8 @@ if __name__ == "__main__":
                         help="Name of the dataset being evaluated")
     parser.add_argument("--reasoneval_path", type=str, default="GAIR/ReasonEval-7B")
     parser.add_argument("--shepherd_path", type=str, default="peiyi9979/math-shepherd-mistral-7b-prm")
-    parser.add_argument("--model_size", type=str, choices=['7B', '34B'], default='7B')
+    parser.add_argument("--model_size", type=str, choices=['7B', '34B'], default='7B',
+                        help="Size of the ReasonEval model to use (7B or 34B)")
     parser.add_argument("--models", type=str, nargs='+', 
                         default=['Abel-7B-002', 'WizardMath-7B-V1.1'],
                         help="List of models to evaluate. Choices: Abel-7B-002, WizardMath-7B-V1.1")

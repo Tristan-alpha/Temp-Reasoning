@@ -5,12 +5,20 @@ SCRIPT_PATH="/home/dazhou/ReasonEval/t-codes/answer_generation.py"
 API_SCRIPT_PATH="/home/dazhou/ReasonEval/t-codes/api_answer_generation.py"
 DATASET="hybrid_reasoning"
 SUBSET_SIZE=0
-# TEMPERATURES=(0.1 0.4 0.5 0.7 0.8 0.9 1.1 1.2 1.4 1.5)
-TEMPERATURES=(0.0 0.2 0.3 0.6 1.0 1.3 1.6)
+TEMPERATURES=(0.1 0.4 0.5 0.7 0.8 0.9 1.1 1.2 1.4 1.5)
+# TEMPERATURES=(0.0 0.2 0.3 0.6 1.0 1.3 1.6)
 
 # API Keys
 API_KEY=sk-dqbCjalqSxgKaqe4YyNGGByaNLFk6vv0gXp0LnErebFmTZkx
 API_KEY_DEEPSEEK=sk-a00c3e30d7524683883aa59f82191ae4
+
+# GPU Selection - modify this array to specify which GPUs to use
+GPU_LIST=(0 1 2 3 4)  # Default GPUs to use - Change this to set specific GPUs
+NUM_GPUS=${#GPU_LIST[@]}  # Calculate number of GPUs from the list
+
+# Run settings
+RUN_LOCAL=true  # Whether to run local models
+RUN_API=false   # Whether to run API models
 
 # Local Models to evaluate (add more models as needed)
 LOCAL_MODELS=(
@@ -27,10 +35,8 @@ API_MODELS=(
     "gemini-2.0-flash"
 )
 
-# Parse command line arguments
-NUM_GPUS=${1:-5}  # Default to 5 GPUs if not specified
-RUN_LOCAL=${2:-true}  # Whether to run local models
-RUN_API=${3:-false}   # Whether to run API models
+# Display selected GPUs
+echo "Using GPUs: ${GPU_LIST[*]}"
 
 # Ensure the hybrid dataset exists
 if [ ! -f "/home/dazhou/ReasonEval/dataset/hybrid_reasoning.json" ]; then
@@ -85,12 +91,13 @@ echo "Starting multiple GPU evaluation tasks"
 
 # Launch local model screen sessions distributing across GPUs and temperatures
 if [ "$RUN_LOCAL" = true ]; then
-    echo "Setting up local model evaluation on $NUM_GPUS GPUs with distributed temperatures"
+    echo "Setting up local model evaluation on specified GPUs with distributed temperatures"
     gpu_counter=0
     
     for model in "${LOCAL_MODELS[@]}"; do
         for temp in "${TEMPERATURES[@]}"; do
-            gpu=$((gpu_counter % $NUM_GPUS))
+            gpu_index=$((gpu_counter % $NUM_GPUS))
+            gpu=${GPU_LIST[$gpu_index]}
             create_local_model_session "$model" $gpu $temp
             
             # Increment GPU counter to distribute across available GPUs
