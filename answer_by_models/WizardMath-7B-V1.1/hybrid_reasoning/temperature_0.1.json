@@ -1,0 +1,90 @@
+[
+  {
+    "uuid": "train/intermediate_algebra/667.json",
+    "question": "The value of\n\\[\\frac{n}{2} + \\frac{18}{n}\\]is smallest for which positive integer $n$?",
+    "source": "math",
+    "model_output_steps": [
+      "Step 1: Let's think step by step.Step 1: I notice that this expression is a weighted average of $n$ and $\\frac{18}{n}$, where the weight of $n$ is $\\frac{1}{2}$ and the weight of $\\frac{18}{n}$ is also $\\frac{1}{2}$.",
+      "Step 2: I recall that a weighted average is always greater than or equal to the arithmetic mean of the weights, which in this case is $\\frac{1}{2} + \\frac{1}{2} = 1$.",
+      "Step 3: Therefore, the expression is smallest when it equals 1, which means that $n = \\sqrt{18}$.",
+      "Step 4: I can check that $\\sqrt{18}$ is a positive integer, namely 3.",
+      "Step 5: # Answer",
+      "Step 2: 3",
+      "Step 3: The answer is: 3."
+    ]
+  },
+  {
+    "uuid": "train/algebra/2108.json",
+    "question": "Find the value of $12 \\times 24 + 36 \\times 12$.",
+    "source": "math",
+    "model_output_steps": [
+      "Step 1: Multiply 12 by 24.",
+      "Step 1: 12 \u00d7 24 = 288",
+      "Step 2: Multiply 36 by 12.",
+      "Step 2: 36 \u00d7 12 = 432",
+      "Step 3: Add the results from steps 1 and 2.",
+      "Step 3: 288 + 432 = 720",
+      "Step 4: So, the value of $12 \\times 24 + 36 \\times 12$ is 720.",
+      "Step 5: The answer is: 720."
+    ]
+  },
+  {
+    "uuid": "train/algebra/1314.json",
+    "question": "Compute: $55\\times1212-15\\times1212$ .",
+    "source": "math",
+    "model_output_steps": [
+      "Step 1: Identify the given numbers and the operation to be performed.",
+      "Step 1: We are given two numbers, 55 and 15, and we need to multiply each of them by another number, 1212.",
+      "Step 2: Perform the multiplication for each number.",
+      "Step 2: First, multiply 55 by 1212:",
+      "Step 3: 55 \u00d7 1212 = 66660",
+      "Step 4: Next, multiply 15 by 1212:",
+      "Step 5: 15 \u00d7 1212 = 18180",
+      "Step 3: Subtract the second result from the first result.",
+      "Step 6: Now, we need to subtract the result of 15 \u00d7 1212 from the result of 55 \u00d7 1212:",
+      "Step 7: 66660 - 18180 = 48480",
+      "Step 4: Write the final answer.",
+      "Step 8: The final answer is 48480.",
+      "Step 9: The answer is: 48480."
+    ]
+  },
+  {
+    "uuid": "train/precalculus/241.json",
+    "question": "If $\\|\\mathbf{a}\\| = 3$ and $\\|\\mathbf{b}\\| = 6,$ then find $(\\mathbf{a} + \\mathbf{b}) \\cdot (\\mathbf{a} - \\mathbf{b}).$",
+    "source": "math",
+    "model_output_steps": [
+      "Step 1: Expand the dot product using the distributive property:",
+      "Step 1: $(\\mathbf{a} + \\mathbf{b}) \\cdot (\\mathbf{a} - \\mathbf{b}) = \\mathbf{a} \\cdot \\mathbf{a} - \\mathbf{a} \\cdot \\mathbf{b} + \\mathbf{b} \\cdot \\mathbf{a} - \\mathbf{b} \\cdot \\mathbf{b}$",
+      "Step 2: Notice that $\\mathbf{a} \\cdot \\mathbf{b} = \\mathbf{b} \\cdot \\mathbf{a}$ due to the commutative property of the dot product. So, we can rewrite the expression as:",
+      "Step 2: $(\\mathbf{a} + \\mathbf{b}) \\cdot (\\mathbf{a} - \\mathbf{b}) = \\mathbf{a} \\cdot \\mathbf{a} - \\mathbf{b} \\cdot \\mathbf{b}$",
+      "Step 3: Use the definition of the dot product to rewrite the expression in terms of the magnitudes of the vectors:",
+      "Step 3: $(\\mathbf{a} + \\mathbf{b}) \\cdot (\\mathbf{a} - \\mathbf{b}) = \\|\\mathbf{a}\\|^2 - \\|\\mathbf{b}\\|^2$",
+      "Step 4: Substitute the given magnitudes of the vectors:",
+      "Step 4: $(\\mathbf{a} + \\mathbf{b}) \\cdot (\\mathbf{a} - \\mathbf{b}) = 3^2 - 6^2$",
+      "Step 5: Calculate the result:",
+      "Step 5: $(\\mathbf{a} + \\mathbf{b}) \\cdot (\\mathbf{a} - \\mathbf{b}) = 9 - 36 = -27$",
+      "Step 6: So, the final answer is $\\boxed{-27}$.",
+      "Step 7: The answer is: -27."
+    ]
+  },
+  {
+    "uuid": "train/prealgebra/636.json",
+    "question": "Pete thinks of a number. He doubles it, adds 10, multiplies by 4, and ends up with 120. What was his original number?",
+    "source": "math",
+    "model_output_steps": [
+      "Step 1: Let's think step by step.First, let's denote the original number that Pete thought of as $x$.",
+      "Step 2: According to the problem, Pete doubles this number. So, we multiply $x$ by 2, which gives us $2x$.",
+      "Step 3: Next, Pete adds 10 to the doubled number. So, we add 10 to $2x$, which gives us $2x + 10$.",
+      "Step 4: Then, Pete multiplies the result by 4. So, we multiply $2x + 10$ by 4, which gives us $4(2x + 10)$.",
+      "Step 5: The problem states that the result of these operations is 120. So, we can set up the equation $4(2x + 10) = 120$.",
+      "Step 6: Now, let's solve this equation for $x$.",
+      "Step 7: First, distribute the 4 in $4(2x + 10)$ to get $8x + 40$.",
+      "Step 8: So, the equation becomes $8x + 40 = 120$.",
+      "Step 9: Next, subtract 40 from both sides of the equation to isolate $8x$ on one side. This gives us $8x = 120 - 40$, which simplifies to $8x = 80$.",
+      "Step 10: Finally, divide both sides of the equation by 8 to solve for $x$. This gives us $x = 80 \\div 8$, which simplifies to $x = 10$.",
+      "Step 11: So, the original number that Pete thought of was 10.",
+      "Step 12: Therefore, the final answer is $\\boxed{10}$.",
+      "Step 13: The answer is: 10."
+    ]
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "uuid": "train/intermediate_algebra/667.json",
+    "question": "The value of\n\\[\\frac{n}{2} + \\frac{18}{n}\\]is smallest for which positive integer $n$?",
+    "source": "math",
+    "model_output_steps": [
+      "Step 1: 1. To find the minimum value of the expression, we can take the derivative with respect to $n$ and set it equal to 0.",
+      "Step 2: 2. Differentiating the expression, we get:",
+      "Step 3: 3. \\[\\frac{1}{2} - \\frac{18}{n^2} = 0\\]",
+      "Step 4: Simplifying, we have:",
+      "Step 5: \\[\\frac{1}{2} = \\frac{18}{n^2}\\]",
+      "Step 6: Cross-multiplying, we get:",
+      "Step 7: \\[n^2 = 36\\]",
+      "Step 8: 4. Taking the square root of both sides, we have:",
+      "Step 9: \\[n = \\pm 6\\]",
+      "Step 10: 5. [Final solution] Since we are looking for a positive integer value of $n$, the minimum value occurs at $n = \\boxed{6}$.",
+      "Step 11: #### 6"
+    ]
+  },
+  {
+    "uuid": "train/algebra/2108.json",
+    "question": "Find the value of $12 \\times 24 + 36 \\times 12$.",
+    "source": "math",
+    "model_output_steps": [
+      "Step 1: 1. We can use the distributive property to simplify the expression:",
+      "Step 2: 2. $12 \\times 24 + 36 \\times 12 = (12 \\times 24) + (36 \\times 12)$.",
+      "Step 3: 3. Now we can calculate each multiplication separately:",
+      "Step 4: 4. $12 \\times 24 = 288$ and $36 \\times 12 = 432$.",
+      "Step 5: 5. [Final solution] Finally, we add the two results together:",
+      "Step 6: $288 + 432 = \\boxed{720}$.",
+      "Step 7: #### 720"
+    ]
+  },
+  {
+    "uuid": "train/algebra/1314.json",
+    "question": "Compute: $55\\times1212-15\\times1212$ .",
+    "source": "math",
+    "model_output_steps": [
+      "Step 1: 1. We can factor out $1212$ from both terms:",
+      "Step 2: 2. $55\\times1212-15\\times1212 = (55-15)\\times1212$",
+      "Step 3: 3. Simplifying the subtraction inside the parentheses:",
+      "Step 4: $55-15 = 40$",
+      "Step 5: 4. Multiplying $40$ by $1212$:",
+      "Step 6: $40\\times1212 = 48480$",
+      "Step 7: 5. [Final solution] So, $55\\times1212-15\\times1212 = \\boxed{48480}$.",
+      "Step 8: #### 48480"
+    ]
+  },
+  {
+    "uuid": "train/precalculus/241.json",
+    "question": "If $\\|\\mathbf{a}\\| = 3$ and $\\|\\mathbf{b}\\| = 6,$ then find $(\\mathbf{a} + \\mathbf{b}) \\cdot (\\mathbf{a} - \\mathbf{b}).$",
+    "source": "math",
+    "model_output_steps": [
+      "Step 1: 1. We have $(\\mathbf{a} + \\mathbf{b}) \\cdot (\\mathbf{a} - \\mathbf{b}) = \\|\\mathbf{a}\\|^2 - \\|\\mathbf{b}\\|^2$ by the dot product formula.",
+      "Step 2: 2. [Final solution] Substituting the given magnitudes, we get $(\\mathbf{a} + \\mathbf{b}) \\cdot (\\mathbf{a} - \\mathbf{b}) = 3^2 - 6^2 = 9 - 36 = \\boxed{-27}.$",
+      "Step 3: #### -27"
+    ]
+  },
+  {
+    "uuid": "train/prealgebra/636.json",
+    "question": "Pete thinks of a number. He doubles it, adds 10, multiplies by 4, and ends up with 120. What was his original number?",
+    "source": "math",
+    "model_output_steps": [
+      "Step 1: 1. Let the original number be $x$.",
+      "Step 2: 2. Pete doubles it, so he has $2x$.",
+      "Step 3: 3. He adds 10, so he has $2x + 10$.",
+      "Step 4: 4. He multiplies by 4, so he has $4(2x + 10) = 8x + 40$.",
+      "Step 5: 5. This equals 120, so we have $8x + 40 = 120$.",
+      "Step 6: 6. Subtracting 40 from both sides gives $8x = 80$.",
+      "Step 7: 7. [Final solution] Dividing both sides by 8 gives $x = \\boxed{10}$.",
+      "Step 8: #### 10"
+    ]
+  }
+]

@@ -15,7 +15,7 @@ def load_math_data():
                     obj = json.loads(line)
                     math_data.append(obj)
                 except json.JSONDecodeError:
-                    print(f"Warning: Could not parse line as JSON: {line[:20]}...")
+                    print(f"Warning: Could not parse line as JSON: {line[:50]}...")
     
     # Organize data by level
     data_by_level = {}
@@ -37,7 +37,7 @@ def load_mr_gsm8k_data():
                     obj = json.loads(line)
                     gsm8k_data.append(obj)
                 except json.JSONDecodeError:
-                    print(f"Warning: Could not parse line as JSON: {line[:20]}...")
+                    print(f"Warning: Could not parse line as JSON: {line[:50]}...")
     
     return gsm8k_data
 
@@ -46,19 +46,19 @@ def create_hybrid_dataset():
     math_by_level = load_math_data()
     mr_gsm8k_data = load_mr_gsm8k_data()
     
-    # Sample 20 problems from each level of math.json
+    # Sample 50 problems from each level of math.json
     math_samples = []
     for level in range(1, 6):  # Levels 1-5
-        if level in math_by_level and len(math_by_level[level]) > 20:
-            samples = random.sample(math_by_level[level], 20)
+        if level in math_by_level and len(math_by_level[level]) > 50:
+            samples = random.sample(math_by_level[level], 50)
             math_samples.extend(samples)
         else:
             print(f"Warning: Not enough problems for level {level}. Using all available.")
             math_samples.extend(math_by_level.get(level, []))
     
-    # Sample 20 problems from mr-gsm8k.json
-    if len(mr_gsm8k_data) > 20:
-        gsm8k_samples = random.sample(mr_gsm8k_data, 20)
+    # Sample 50 problems from mr-gsm8k.json
+    if len(mr_gsm8k_data) > 50:
+        gsm8k_samples = random.sample(mr_gsm8k_data, 50)
     else:
         print(f"Warning: Not enough problems in mr-gsm8k.json. Using all available.")
         gsm8k_samples = mr_gsm8k_data
