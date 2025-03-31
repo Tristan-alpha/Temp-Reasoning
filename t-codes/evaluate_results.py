@@ -254,10 +254,10 @@ def main(args):
     # Path to results from temperature study
     results_dir = args.results_dir
     dataset_name = args.dataset_name
-    detailed_dir = os.path.join(args.output_dir, 'detailed_results')
-    aggregated_dir = os.path.join(args.output_dir, 'aggregated_results')    
-    os.makedirs(detailed_dir, exist_ok=True)
-    os.makedirs(aggregated_dir, exist_ok=True)
+    # detailed_dir = os.path.join(args.output_dir, 'detailed_results')
+    # aggregated_dir = os.path.join(args.output_dir, 'aggregated_results')    
+    # os.makedirs(detailed_dir, exist_ok=True)
+    # os.makedirs(aggregated_dir, exist_ok=True)
     
     # Get models to evaluate from command line arguments
     models_to_evaluate = args.models

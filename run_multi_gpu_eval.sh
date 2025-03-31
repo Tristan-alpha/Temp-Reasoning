@@ -8,7 +8,7 @@ NUM_TEMPS=${#TEMPERATURES[@]}
 MODEL_SIZE="7B"  # Default model size
 
 # GPU Selection - modify this array to specify which GPUs to use
-GPU_LIST=(2 3 4)  # Default GPUs to use - Change this to set specific GPUs
+GPU_LIST=(0 1)  # Default GPUs to use - Change this to set specific GPUs
 NUM_GPUS=${#GPU_LIST[@]}  # Calculate number of GPUs from the list
 
 # Run settings
@@ -16,19 +16,16 @@ RUN_LOCAL=true  # Whether to run local models
 RUN_API=false   # Whether to run API models
 
 # Local Models to evaluate (add more models as needed)
-LOCAL_MODELS=(
+MODELS=(
     "WizardMath-7B-V1.1" 
-    # "Abel-7B-002"
+    "Abel-7B-002"
+    # "gpt-4o-mini"
+    # "deepseek-v3"
+    # "deepseek-r1"
+    # "claude-3-7-sonnet-20250219"
+    # "gemini-2.0-flash"
 )
 
-# API Models to evaluate
-API_MODELS=(
-    "gpt-4o-mini"
-    "deepseek-v3"
-    "deepseek-r1"
-    "claude-3-7-sonnet-20250219"
-    "gemini-2.0-flash"
-)
 
 # Display selected GPUs
 echo "Using GPUs: ${GPU_LIST[*]}"
@@ -66,67 +63,17 @@ create_eval_session() {
 # Main execution
 echo "Starting multiple GPU evaluation tasks with ReasonEval-$MODEL_SIZE"
 
-# Launch local model screen sessions distributing temperatures across GPUs
-if [ "$RUN_LOCAL" = true ]; then
-    echo "Setting up local model evaluation on specified GPUs with distributed temperatures"
-    
-    # For each local model
-    for model in "${LOCAL_MODELS[@]}"; do
-        # For each GPU
-        for gpu_index in $(seq 0 $((NUM_GPUS-1))); do
-            gpu=${GPU_LIST[$gpu_index]}
-            temp_group=""
-            
-            # Gather all temperatures for this GPU
-            for temp_index in $(seq 0 $((NUM_TEMPS-1))); do
-                if [ $((temp_index % NUM_GPUS)) -eq $gpu_index ]; then
-                    if [ -z "$temp_group" ]; then
-                        temp_group="${TEMPERATURES[$temp_index]}"
-                    else
-                        temp_group="$temp_group ${TEMPERATURES[$temp_index]}"
-                    fi
-                fi
-            done
-            
-            # Create a single session for this model-GPU combination with all assigned temperatures
-            if [ ! -z "$temp_group" ]; then
-                create_eval_session "$model" $gpu "$temp_group"
-                sleep 1
-            fi
-        done
-    done
-fi
 
-# Launch API model screen sessions with distributed temperatures
-if [ "$RUN_API" = true ]; then
-    echo "Setting up API model evaluation with distributed temperatures"
+# For each model
+gpu_index=0  # Initialize outside the loop to distribute models across GPUs
+for model in "${MODELS[@]}"; do
+    gpu=${GPU_LIST[$gpu_index]}
+    create_eval_session "$model" $gpu "${TEMPERATURES[*]}"
     
-    # For each API model
-    for model in "${API_MODELS[@]}"; do
-        # For each GPU
-        for gpu_index in $(seq 0 $((NUM_GPUS-1))); do
-            gpu=${GPU_LIST[$gpu_index]}
-            temp_group=""
-            
-            # Gather all temperatures for this GPU
-            for temp_index in $(seq 0 $((NUM_TEMPS-1))); do
-                if [ $((temp_index % NUM_GPUS)) -eq $gpu_index ]; then
-                    if [ -z "$temp_group" ]; then
-                        temp_group="${TEMPERATURES[$temp_index]}"
-                    else
-                        temp_group="$temp_group ${TEMPERATURES[$temp_index]}"
-                    fi
-                fi
-            done
-            
-            # Create a single session for this model-GPU combination with all assigned temperatures
-            if [ ! -z "$temp_group" ]; then
-                create_eval_session "$model" $gpu "$temp_group"
-                sleep 1
-            fi
-        done
-    done
-fi
+    # Move to next GPU in rotation
+    ((gpu_index=(gpu_index+1)%NUM_GPUS))
+done
+
 
 echo "All evaluation screen sessions have been created. Use 'screen -ls' to list active sessions."
 echo "To attach to a session, use 'screen -r session_name'"
