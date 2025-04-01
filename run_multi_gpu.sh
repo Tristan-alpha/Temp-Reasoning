@@ -5,7 +5,9 @@ SCRIPT_PATH="/home/dazhou/ReasonEval/t-codes/answer_generation.py"
 API_SCRIPT_PATH="/home/dazhou/ReasonEval/t-codes/api_answer_generation.py"
 DATASET="hybrid_reasoning"
 SUBSET_SIZE=0
-TEMPERATURES=(0.1 0.4 0.5 0.7 0.8 0.9 1.1 1.2 1.4 1.5)
+# TEMPERATURES=(0.0 0.2)
+TEMPERATURES=(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6)
+# TEMPERATURES=(0.1 0.4 0.5 0.7 0.8 0.9 1.1 1.2 1.4 1.5)
 # TEMPERATURES=(0.0 0.2 0.3 0.6 1.0 1.3 1.6)
 NUM_TEMPS=${#TEMPERATURES[@]}  # Calculate number of temperatures
 
@@ -18,8 +20,8 @@ GPU_LIST=(0 1)  # Default GPUs to use - Change this to set specific GPUs
 NUM_GPUS=${#GPU_LIST[@]}  # Calculate number of GPUs from the list
 
 # Run settings
-RUN_LOCAL=true  # Whether to run local models
-RUN_API=false   # Whether to run API models
+RUN_LOCAL=false  # Whether to run local models
+RUN_API=true   # Whether to run API models
 
 # Local Models to evaluate (add more models as needed)
 LOCAL_MODELS=(
@@ -31,11 +33,11 @@ LOCAL_MODELS=(
 API_MODELS=(
     # "gpt-4o-mini"
     # "deepseek-chat"
-    "deepseek-reasoner"
+    # "deepseek-reasoner"
     # "deepseek-v3"
     # "deepseek-r1"
     # "claude-3-7-sonnet-20250219"
-    # "gemini-2.0-flash"
+    "gemini-2.0-flash"
 )
 
 # Display selected GPUs
@@ -70,7 +72,7 @@ create_api_model_session() {
     local temperature=$2
     local base_url=""
     local api_key=""
-    local session_name="api_${model//[^a-zA-Z0-9]/_}_temp${temperature}"
+    local session_name="api_${model//[^a-zA-Z0-9]/_}_all_temperatures"
     
     echo "Creating API screen session $session_name for $model with temperature $temperature"
     

@@ -3,23 +3,21 @@
 # Configuration variables
 SCRIPT_PATH="/home/dazhou/ReasonEval/t-codes/evaluate_results.py"
 DATASET="hybrid_reasoning"
-TEMPERATURES=(0.0 0.2 0.3 0.6 1.0 1.3 1.6)
+TEMPERATURES=(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6)
+# TEMPERATURES=(0.0 0.2)
+# TEMPERATURES=(0.1 0.4 0.5 0.7 0.8 0.9 1.1 1.2 1.4 1.5)
 NUM_TEMPS=${#TEMPERATURES[@]}
 MODEL_SIZE="7B"  # Default model size
 
 # GPU Selection - modify this array to specify which GPUs to use
-GPU_LIST=(0 1)  # Default GPUs to use - Change this to set specific GPUs
+GPU_LIST=(1)  # Default GPUs to use - Change this to set specific GPUs
 NUM_GPUS=${#GPU_LIST[@]}  # Calculate number of GPUs from the list
-
-# Run settings
-RUN_LOCAL=true  # Whether to run local models
-RUN_API=false   # Whether to run API models
 
 # Local Models to evaluate (add more models as needed)
 MODELS=(
-    "WizardMath-7B-V1.1" 
-    "Abel-7B-002"
-    # "gpt-4o-mini"
+    # "WizardMath-7B-V1.1" 
+    # "Abel-7B-002"
+    "gpt-4o-mini"
     # "deepseek-v3"
     # "deepseek-r1"
     # "claude-3-7-sonnet-20250219"

@@ -267,13 +267,13 @@ def main(args):
     model_paths = {
         'Abel-7B-002': 'GAIR/Abel-7B-002',
         'WizardMath-7B-V1.1': 'WizardLMTeam/WizardMath-7B-V1.1',
-        'o1': 'o1',
-        'o3-mini': 'o3-mini',
+        "gpt-4o-mini": 'gpt-4o-mini',
         'deepseek-v3': 'deepseek-v3',
         'deepseek-r1': 'deepseek-r1',
+        'deepseek-chat': 'deepseek-chat',
+        'deepseek-reasoner': 'deepseek-reasoner',
         'claude-3-7-sonnet-20250219': 'claude-3-7-sonnet-20250219',
         'gemini-2.0-flash': 'gemini-2.0-flash',
-        'grok-3-reasoner': 'grok-3-reasoner'
     }
     
     # Validate requested models
@@ -313,7 +313,7 @@ def main(args):
         print(f"Evaluating {model_name}...")
         
         # Check if detailed CSV already exists and load it
-        detailed_csv_path = os.path.join(args.output_dir, model_name, dataset_name, 'detailed.csv')
+        detailed_csv_path = os.path.join(args.output_dir, model_name, dataset_name, f"ReasonEval_{args.model_size}", 'detailed.csv')
         if os.path.exists(detailed_csv_path):
             print(f"Loading existing detailed results for {model_name} on {dataset_name}...")
             results_df = pd.read_csv(detailed_csv_path)
@@ -401,7 +401,7 @@ def main(args):
             }).reset_index()
             
             # Save overall aggregated results
-            agg_csv_path = os.path.join(args.output_dir, model_name, dataset_name, "aggregated.csv")
+            agg_csv_path = os.path.join(args.output_dir, model_name, dataset_name, f"ReasonEval_{args.model_size}", "aggregated.csv")
             agg_results.to_csv(agg_csv_path, index=False)
             print(f"Saved aggregated results for {model_name} on {dataset_name}")
             
@@ -413,7 +413,7 @@ def main(args):
             }).reset_index()
             
             # Save source-specific aggregated results
-            source_agg_csv_path = os.path.join(args.output_dir, model_name, dataset_name, "source_aggregated.csv")
+            source_agg_csv_path = os.path.join(args.output_dir, model_name, dataset_name, f"ReasonEval_{args.model_size}", "source_aggregated.csv")
             source_agg_results.to_csv(source_agg_csv_path, index=False)
             print(f"Saved source-specific aggregated results for {model_name} on {dataset_name}")
     
