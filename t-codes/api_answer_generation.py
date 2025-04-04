@@ -218,15 +218,12 @@ def main(args):
     # Define the model mappings for OpenAI models
     model_paths = {
         'gpt-4o-mini': 'gpt-4o-mini',
-        # 'o1': 'o1',
-        # 'o3-mini': 'o3-mini',
         'deepseek-v3': 'deepseek-v3',
         'deepseek-r1': 'deepseek-r1',
+        'deepseek-chat': 'deepseek-chat',
         'deepseek-reasoner': 'deepseek-reasoner',
         'claude-3-7-sonnet-20250219': 'claude-3-7-sonnet-20250219',
         'gemini-2.0-flash': 'gemini-2.0-flash',
-        'grok-3-reasoner': 'grok-3-reasoner',
-        'grok-2': 'grok-2',
     }
     
     # Get models to evaluate from command line arguments

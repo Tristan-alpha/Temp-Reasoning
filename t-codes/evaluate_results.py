@@ -232,32 +232,38 @@ def evaluate_solution_with_math_shepherd(model, tokenizer, question, reasoning_s
         # and incorrect answers have low scores (~0.02)
         return step_scores, solution_scores  # Convert last tensor element to Python scalar
 
-def load_reasoneval_model(model_path, model_size, device):
+def load_reasoneval_model(model_path, model_size):
     """Load the appropriate ReasonEval model based on model size"""
     print(f"Loading ReasonEval-{model_size} model from {model_path}...")
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     
+    print(f"Using automatic GPU allocation for ReasonEval-{model_size} model")
     if model_size == '34B':
-        model = ReasonEval_34B.from_pretrained(model_path).to(device)
+        model = ReasonEval_34B.from_pretrained(
+            model_path,
+            device_map="auto",  # Automatically distribute across GPUs
+            torch_dtype=torch.float16  # Use half-precision to reduce memory usage
+        )
     else:  # Default to 7B
-        model = ReasonEval_7B.from_pretrained(model_path).to(device)
+        model = ReasonEval_7B.from_pretrained(
+            model_path,
+            device_map="auto",  # Automatically distribute across GPUs
+            torch_dtype=torch.float16  # Use half-precision to reduce memory usage
+        )
+    print("Model loaded with device map:", model.hf_device_map if hasattr(model, "hf_device_map") else "Not available")
     
     model.eval()
     return model, tokenizer
 
 def main(args):
-
-    # Set CUDA device   
-    torch.cuda.set_device(args.gpu)
-    device = torch.device(f"cuda:{args.gpu}")
-
+    # Get GPU ID from command-line arguments
+    gpu_id = args.gpu
+    device = torch.device(f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu")
+    print(f"Using device {device} for specific operations")
+    
     # Path to results from temperature study
     results_dir = args.results_dir
     dataset_name = args.dataset_name
-    detailed_dir = os.path.join(args.output_dir, 'detailed_results')
-    aggregated_dir = os.path.join(args.output_dir, 'aggregated_results')    
-    os.makedirs(detailed_dir, exist_ok=True)
-    os.makedirs(aggregated_dir, exist_ok=True)
     
     # Get models to evaluate from command line arguments
     models_to_evaluate = args.models
@@ -267,13 +273,13 @@ def main(args):
     model_paths = {
         'Abel-7B-002': 'GAIR/Abel-7B-002',
         'WizardMath-7B-V1.1': 'WizardLMTeam/WizardMath-7B-V1.1',
-        'o1': 'o1',
-        'o3-mini': 'o3-mini',
+        "gpt-4o-mini": 'gpt-4o-mini',
         'deepseek-v3': 'deepseek-v3',
         'deepseek-r1': 'deepseek-r1',
+        'deepseek-chat': 'deepseek-chat',
+        'deepseek-reasoner': 'deepseek-reasoner',
         'claude-3-7-sonnet-20250219': 'claude-3-7-sonnet-20250219',
         'gemini-2.0-flash': 'gemini-2.0-flash',
-        'grok-3-reasoner': 'grok-3-reasoner'
     }
     
     # Validate requested models
@@ -290,19 +296,19 @@ def main(args):
     
     print(f"Evaluating models: {', '.join(models_to_evaluate)}")
     
-    # Load ReasonEval model with selected size
+    # Load ReasonEval model with selected size and auto device mapping
     reasoneval_path = args.reasoneval_path
-    reasoneval_model, reasoneval_tokenizer = load_reasoneval_model(reasoneval_path, args.model_size, device)
+    reasoneval_model, reasoneval_tokenizer = load_reasoneval_model(reasoneval_path, args.model_size)
     
-    # Load Math-Shepherd model
+    # Load Math-Shepherd model with auto device mapping
     print("Loading Math-Shepherd model...")
     shepherd_path = args.shepherd_path
     shepherd_tokenizer = AutoTokenizer.from_pretrained(shepherd_path)
     shepherd_model = AutoModelForCausalLM.from_pretrained(
         shepherd_path,
         torch_dtype=torch.float16,
-        device_map={"": device}
-    ).to(device)
+        device_map="auto"
+    )
     shepherd_model.eval()
     
     # Dictionary to store results for all models
@@ -313,7 +319,7 @@ def main(args):
         print(f"Evaluating {model_name}...")
         
         # Check if detailed CSV already exists and load it
-        detailed_csv_path = os.path.join(args.output_dir, model_name, dataset_name, 'detailed.csv')
+        detailed_csv_path = os.path.join(args.output_dir, model_name, dataset_name, f"ReasonEval_{args.model_size}", 'detailed.csv')
         if os.path.exists(detailed_csv_path):
             print(f"Loading existing detailed results for {model_name} on {dataset_name}...")
             results_df = pd.read_csv(detailed_csv_path)
@@ -401,7 +407,7 @@ def main(args):
             }).reset_index()
             
             # Save overall aggregated results
-            agg_csv_path = os.path.join(args.output_dir, model_name, dataset_name, "aggregated.csv")
+            agg_csv_path = os.path.join(args.output_dir, model_name, dataset_name, f"ReasonEval_{args.model_size}", "aggregated.csv")
             agg_results.to_csv(agg_csv_path, index=False)
             print(f"Saved aggregated results for {model_name} on {dataset_name}")
             
@@ -413,7 +419,7 @@ def main(args):
             }).reset_index()
             
             # Save source-specific aggregated results
-            source_agg_csv_path = os.path.join(args.output_dir, model_name, dataset_name, "source_aggregated.csv")
+            source_agg_csv_path = os.path.join(args.output_dir, model_name, dataset_name, f"ReasonEval_{args.model_size}", "source_aggregated.csv")
             source_agg_results.to_csv(source_agg_csv_path, index=False)
             print(f"Saved source-specific aggregated results for {model_name} on {dataset_name}")
     
@@ -435,7 +441,7 @@ if __name__ == "__main__":
     parser.add_argument("--temperatures", type=float, nargs='+',
                         default=[0.1, 0.3, 0.6, 1.0, 1.3, 1.6, 2.0],
                         help="List of temperature values to test")
-    parser.add_argument("--gpu", type=int, default=0)
+    parser.add_argument("--gpu", type=int, default=0, help="GPU ID to use for specific operations")
     args = parser.parse_args()
     
     os.makedirs(args.output_dir, exist_ok=True)

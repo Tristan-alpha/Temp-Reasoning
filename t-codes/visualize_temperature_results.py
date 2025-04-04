@@ -5,8 +5,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.gridspec import GridSpec
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
 
-def load_aggregated_results(file_paths):
+def load_aggregated_results(file_paths, output_path="/home/dazhou/ReasonEval/evaluation_results/summary.csv"):
     """
     Load multiple aggregated result CSV files and combine them
     
@@ -22,18 +24,37 @@ def load_aggregated_results(file_paths):
             df = pd.read_csv(path)
             # Extract model and dataset info from the path if not in the dataframe
             path_parts = path.split(os.sep)
+            
             # Find model name from path
             if 'Model' not in df.columns:
+                # Match a wider range of model names from your workspace
+                model_names = [
+                    'Abel-7B-002', 'WizardMath-7B-V1.1', 'gpt-4o-mini', 'deepseek-v3', 
+                    'deepseek-r1', 'deepseek-chat', 'deepseek-reasoner',
+                    'claude-3-7-sonnet-20250219', 'gemini-2.0-flash'
+                ]
                 for part in path_parts:
-                    if any(model_name in part for model_name in ['Abel', 'Wizard', 'OpenChat', 'Llama', 'Mistral']):
+                    if any(model_name in part for model_name in model_names):
                         df['Model'] = part
                         break
+            
             # Find dataset name from path
             if 'Dataset' not in df.columns:
+                dataset_names = ['hybrid_reasoning', 'mr-gsm8k']
                 for part in path_parts:
-                    if any(dataset_name in part for dataset_name in ['mr-gsm8k', 'gsm8k', 'math', 'MATH']):
+                    if any(dataset_name in part for dataset_name in dataset_names):
                         df['Dataset'] = part
                         break
+            
+            # Check for evaluation folder
+            if 'EvalModel' not in df.columns:
+                evaluator_names = ['ReasonEval_7B', 'ReasonEval_34B']
+                for part in path_parts:
+                    if any(evaluator_name in part for evaluator_name in evaluator_names):
+                        df['EvalModel'] = part
+                        break
+
+            
             dfs.append(df)
         else:
             print(f"Warning: File not found: {path}")
@@ -41,21 +62,41 @@ def load_aggregated_results(file_paths):
     if not dfs:
         raise ValueError("No valid data files found")
         
-    return pd.concat(dfs, ignore_index=True)
+    combined_df = pd.concat(dfs, ignore_index=True)
+    
+    combined_df.to_csv(output_path, index=False)
+
+    return combined_df
 
 def create_metric_comparison_plot(df, output_path, figsize=(15, 10), dataset=None):
     """Create plots comparing metrics across models and temperatures"""
-    plt.figure(figsize=figsize)
-    
-    # Sort temperatures for proper line ordering
-    all_temps = sorted(df['Temperature'].unique())
-    
     # Filter by dataset if specified
     if dataset:
         df = df[df['Dataset'] == dataset]
         dataset_title = f" - {dataset}"
     else:
         dataset_title = ""
+    
+    # Separate data by evaluation model
+    df_7B = df[df['EvalModel'] == 'ReasonEval_7B']
+    df_34B = df[df['EvalModel'] == 'ReasonEval_34B']
+    
+    # Generate separate plots for each evaluation model
+    if not df_7B.empty:
+        _create_metric_comparison_plot_for_eval_model(df_7B, output_path, figsize, dataset, "ReasonEval_7B")
+    
+    if not df_34B.empty:
+        _create_metric_comparison_plot_for_eval_model(df_34B, output_path, figsize, dataset, "ReasonEval_34B")
+    
+def _create_metric_comparison_plot_for_eval_model(df, output_path, figsize=(15, 10), dataset=None, eval_model=""):
+    """Helper function to create plots for a specific evaluation model"""
+    plt.figure(figsize=figsize)
+    
+    # Sort temperatures for proper line ordering
+    all_temps = sorted(df['Temperature'].unique())
+    
+    # Dataset title for plot
+    dataset_title = f" - {dataset}" if dataset else ""
     
     # Create a grid with 2 rows, 2 columns
     gs = GridSpec(2, 2, figure=plt.gcf())
@@ -124,23 +165,21 @@ def create_metric_comparison_plot(df, output_path, figsize=(15, 10), dataset=Non
     ax4.grid(True, linestyle='--', alpha=0.7)
     ax4.set_xticks(all_temps)
     
-    plt.suptitle(f'Metrics Comparison Across Models{dataset_title}', fontsize=16, fontweight='bold')
+    plt.suptitle(f'Metrics Comparison Across Models{dataset_title}\nEvaluation Model: {eval_model}', fontsize=16, fontweight='bold')
     plt.tight_layout()
     
-    # Adjust the output path to include dataset info if necessary
+    # Adjust the output path to include dataset and eval model info
+    output_dir = os.path.dirname(output_path)
+    filename = os.path.splitext(os.path.basename(output_path))[0]
     if dataset:
-        output_dir = os.path.dirname(output_path)
-        filename = f"{os.path.splitext(os.path.basename(output_path))[0]}_{dataset}.png"
-        new_output_path = os.path.join(output_dir, filename)
-    else:
-        new_output_path = output_path
+        filename = f"{filename}_{dataset}"
+    filename = f"{filename}_{eval_model}.png"
+    new_output_path = os.path.join(output_dir, filename)
         
     plt.savefig(new_output_path, dpi=300, bbox_inches='tight')
     plt.close()
     
-    print(f"Created metric comparison plot: {new_output_path}")
-
-# ... existing code for other visualization functions ...
+    print(f"Created metric comparison plot for {eval_model}: {new_output_path}")
 
 def create_heatmap_visualization(df, output_path, figsize=(12, 8), dataset=None):
     """Create heatmap visualization for temperature vs metrics"""
@@ -151,10 +190,21 @@ def create_heatmap_visualization(df, output_path, figsize=(12, 8), dataset=None)
     else:
         dataset_title = ""
     
-    # Pivot data to create a matrix suitable for heatmap
-    models = df['Model'].unique()
+    # Separate data by evaluation model
+    df_7B = df[df['EvalModel'] == 'ReasonEval_7B']
+    df_34B = df[df['EvalModel'] == 'ReasonEval_34B']
     
-    plt.figure(figsize=figsize)
+    # Generate separate plots for each evaluation model
+    if not df_7B.empty:
+        _create_heatmap_visualization_for_eval_model(df_7B, output_path, figsize, dataset, "ReasonEval_7B")
+    
+    if not df_34B.empty:
+        _create_heatmap_visualization_for_eval_model(df_34B, output_path, figsize, dataset, "ReasonEval_34B")
+
+def _create_heatmap_visualization_for_eval_model(df, output_path, figsize=(12, 8), dataset=None, eval_model=""):
+    """Helper function to create heatmap for a specific evaluation model"""
+    # Dataset title for plot
+    dataset_title = f" - {dataset}" if dataset else ""
     
     # Set up a grid with 3 rows (one for each metric)
     fig, axes = plt.subplots(3, 1, figsize=figsize)
@@ -170,21 +220,21 @@ def create_heatmap_visualization(df, output_path, figsize=(12, 8), dataset=None)
         sns.heatmap(pivot_data, annot=True, fmt='.3f', cmap='viridis', ax=axes[i], cbar_kws={'label': metric})
         axes[i].set_title(f'{title} by Temperature', fontsize=12, fontweight='bold')
         
-    plt.suptitle(f'Temperature vs Metrics Heatmap{dataset_title}', fontsize=16, fontweight='bold')
+    plt.suptitle(f'Temperature vs Metrics Heatmap{dataset_title}\nEvaluation Model: {eval_model}', fontsize=16, fontweight='bold')
     plt.tight_layout()
     
-    # Adjust the output path to include dataset info if necessary
+    # Adjust the output path to include dataset and eval model info
+    output_dir = os.path.dirname(output_path)
+    filename = os.path.splitext(os.path.basename(output_path))[0]
     if dataset:
-        output_dir = os.path.dirname(output_path)
-        filename = f"{os.path.splitext(os.path.basename(output_path))[0]}_{dataset}.png"
-        new_output_path = os.path.join(output_dir, filename)
-    else:
-        new_output_path = output_path
+        filename = f"{filename}_{dataset}"
+    filename = f"{filename}_{eval_model}.png"
+    new_output_path = os.path.join(output_dir, filename)
         
     plt.savefig(new_output_path, dpi=300, bbox_inches='tight')
     plt.close()
     
-    print(f"Created heatmap visualization: {new_output_path}")
+    print(f"Created heatmap visualization for {eval_model}: {new_output_path}")
 
 def create_optimal_temperature_plot(df, output_path, figsize=(10, 6), dataset=None):
     """Create plot to identify optimal temperature for each model"""
@@ -342,18 +392,15 @@ def create_score_distribution_plots(input_dir, output_dir, models, datasets=None
     ranges = [(0, 0.25), (0.25, 0.5), (0.5, 0.75), (0.75, 1.0)]
     range_labels = ['0-25%', '25-50%', '50-75%', '75-100%']
     
-    # Load detailed data for each model
-    model_data = {}
-    
-    # Structure to hold data by model and dataset
-    data_by_model_dataset = {}
+    # Structure to hold data by model, dataset and evaluation model
+    data_by_model_dataset_eval = {}
     
     for model in models:
         # Search for detailed CSVs containing this model name
         model_files = []
         for root, _, files in os.walk(input_dir):
             for file in files:
-                if model in file and file.endswith('_detailed.csv'):
+                if model in file and (file == "detailed.csv" or file == "source_aggregated.csv") and ("ReasonEval_7B" in root or "ReasonEval_34B" in root):
                     model_files.append(os.path.join(root, file))
         
         if not model_files:
@@ -363,7 +410,7 @@ def create_score_distribution_plots(input_dir, output_dir, models, datasets=None
         for file_path in model_files:
             # Try to determine dataset from file path
             dataset = None
-            for potential_dataset in ['mr-gsm8k', 'gsm8k', 'MATH', 'math']:
+            for potential_dataset in ['hybrid_reasoning', 'mr-gsm8k', 'gsm8k', 'MATH', 'math']:
                 if potential_dataset in file_path:
                     dataset = potential_dataset
                     break
@@ -371,6 +418,15 @@ def create_score_distribution_plots(input_dir, output_dir, models, datasets=None
             if not dataset and datasets:
                 # If we couldn't determine dataset but user provided a list
                 dataset = datasets[0]  # Default to first dataset
+            
+            # Determine evaluation model
+            eval_model = None
+            if "ReasonEval_7B" in file_path:
+                eval_model = "ReasonEval_7B"
+            elif "ReasonEval_34B" in file_path:
+                eval_model = "ReasonEval_34B"
+            else:
+                continue  # Skip if no evaluation model found
             
             # Load the CSV
             df = pd.read_csv(file_path)
@@ -382,13 +438,17 @@ def create_score_distribution_plots(input_dir, output_dir, models, datasets=None
             # Add Dataset column if it doesn't exist
             if 'Dataset' not in df.columns and dataset:
                 df['Dataset'] = dataset
+                
+            # Add EvalModel column if it doesn't exist
+            if 'EvalModel' not in df.columns:
+                df['EvalModel'] = eval_model
             
             # Add to the data structure
-            key = (model, dataset if dataset else 'unknown')
-            if key not in data_by_model_dataset:
-                data_by_model_dataset[key] = df
+            key = (model, dataset if dataset else 'unknown', eval_model)
+            if key not in data_by_model_dataset_eval:
+                data_by_model_dataset_eval[key] = df
     
-    if not data_by_model_dataset:
+    if not data_by_model_dataset_eval:
         print("No detailed data found. Cannot create distribution plots.")
         return
     
@@ -399,10 +459,10 @@ def create_score_distribution_plots(input_dir, output_dir, models, datasets=None
         'Solution_Score_Shepherd': 'Shepherd Score'
     }
     
-    # For each dataset and metric, create a distribution plot
-    for (model, dataset), df in data_by_model_dataset.items():
-        # Create a specific output directory for this model/dataset
-        model_dataset_dir = os.path.join(output_dir, model, dataset if dataset != 'unknown' else 'default')
+    # For each dataset, evaluation model, and metric, create a distribution plot
+    for (model, dataset, eval_model), df in data_by_model_dataset_eval.items():
+        # Create a specific output directory for this model/dataset/eval_model
+        model_dataset_dir = os.path.join(output_dir, model, dataset if dataset != 'unknown' else 'default', eval_model)
         os.makedirs(model_dataset_dir, exist_ok=True)
         
         # For each metric, create distribution plots
@@ -478,7 +538,7 @@ def create_score_distribution_plots(input_dir, output_dir, models, datasets=None
             for j in range(i + 1, len(axes)):
                 axes[j].set_visible(False)
             
-            plt.suptitle(f'Distribution of {metric_name} - {model} on {dataset}', 
+            plt.suptitle(f'Distribution of {metric_name} - {model} on {dataset}\nEvaluation Model: {eval_model}', 
                        fontsize=18, fontweight='bold')
             plt.tight_layout(rect=[0, 0, 1, 0.95])
             
@@ -487,7 +547,7 @@ def create_score_distribution_plots(input_dir, output_dir, models, datasets=None
             plt.savefig(output_path, dpi=300, bbox_inches='tight')
             plt.close()
             
-            print(f"Created distribution plot for {metric_name}: {output_path}")
+            print(f"Created distribution plot for {metric_name} ({eval_model}): {output_path}")
 
 def prepare_output_directories(args):
     """Create organized output directories for visualizations"""
@@ -499,16 +559,13 @@ def prepare_output_directories(args):
         for dataset in args.datasets:
             os.makedirs(os.path.join(args.output_dir, dataset), exist_ok=True)
     
-    # Directory for combined model comparisons
-    os.makedirs(os.path.join(args.output_dir, 'model_comparisons'), exist_ok=True)
-    
     # Directory for detailed distributions if requested
     if args.detailed:
         os.makedirs(os.path.join(args.output_dir, 'distributions'), exist_ok=True)
         
-    return os.path.join(args.output_dir, 'model_comparisons')
+    return os.path.join(args.output_dir, dataset)
 
-def analyze_by_dataset(df, args, comparison_dir):
+def analyze_by_dataset(df, args, datasets_dir):
     """Create visualizations separated by dataset"""
     # Get all datasets in the data
     if 'Dataset' in df.columns:
@@ -531,19 +588,19 @@ def analyze_by_dataset(df, args, comparison_dir):
         # Common visualizations for this dataset
         create_metric_comparison_plot(
             dataset_df, 
-            os.path.join(comparison_dir, 'temperature_metrics_comparison.png'),
+            os.path.join(datasets_dir, 'temperature_metrics_comparison.png'),
             dataset=dataset
         )
         
         create_heatmap_visualization(
             dataset_df,
-            os.path.join(comparison_dir, 'temperature_metrics_heatmap.png'),
+            os.path.join(datasets_dir, 'temperature_metrics_heatmap.png'),
             dataset=dataset
         )
         
         summary_df = create_optimal_temperature_plot(
             dataset_df,
-            os.path.join(comparison_dir, 'optimal_temperature.png'),
+            os.path.join(datasets_dir, 'optimal_temperature.png'),
             dataset=dataset
         )
         
@@ -553,7 +610,7 @@ def analyze_by_dataset(df, args, comparison_dir):
         
         create_trade_off_plot(
             dataset_df,
-            os.path.join(comparison_dir, 'metrics_tradeoff.png'),
+            os.path.join(datasets_dir, 'metrics_tradeoff.png'),
             dataset=dataset
         )
     
@@ -570,10 +627,10 @@ def main():
     parser.add_argument("--output_dir", type=str, default="/home/dazhou/ReasonEval/evaluation_results/visualizations",
                        help="Directory to save visualizations")
     parser.add_argument("--models", type=str, nargs='+', 
-                       default=['Abel-7B-002', 'WizardMath-7B-V1.1'],
+                       default=['Abel-7B-002', 'WizardMath-7B-V1.1', 'gpt-4o-mini', 'deepseek-chat', 'deepseek-reasoner'],
                        help="Models to include in visualizations")
     parser.add_argument("--datasets", type=str, nargs='+', 
-                       default=['mr-gsm8k'],
+                       default=['hybrid_reasoning'],
                        help="Datasets to include in visualizations")
     parser.add_argument("--detailed", action="store_true", 
                        help="Create detailed distribution visualizations")
@@ -581,7 +638,7 @@ def main():
     args = parser.parse_args()
     
     # Prepare output directories
-    comparison_dir = prepare_output_directories(args)
+    datasets_dir = prepare_output_directories(args)
     
     # Construct paths to aggregated files
     agg_files = []
@@ -590,8 +647,12 @@ def main():
     for model in args.models:
         if args.datasets:
             for dataset in args.datasets:
-                potential_path = os.path.join(args.input_dir, model, dataset, f"aggregated.csv")
-                agg_files.append(potential_path)
+                # Update path to include ReasonEval_7B and ReasonEval_34B subdirectories
+                potential_paths = [
+                    os.path.join(args.input_dir, model, dataset, "ReasonEval_7B", "aggregated.csv"),
+                    os.path.join(args.input_dir, model, dataset, "ReasonEval_34B", "aggregated.csv")
+                ]
+                agg_files.extend([p for p in potential_paths if os.path.exists(p)])
 
     
     if not agg_files:
@@ -603,7 +664,7 @@ def main():
         df = load_aggregated_results(agg_files)
         
         # Analyze data by dataset
-        analyze_by_dataset(df, args, comparison_dir)
+        analyze_by_dataset(df, args, datasets_dir)
         
         # Create score distribution plots if detailed flag is set
         if args.detailed:

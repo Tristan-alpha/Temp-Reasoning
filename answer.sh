@@ -7,17 +7,16 @@ SUBSET_SIZE=0
 TEMPERATURES=(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5)
 
 # Parse command line arguments
-GPU=${1:-0}  # Default to GPU 0 if not specified
-MODEL=${2:-"WizardMath-7B-V1.1"}  # Default model if not specified
+GPU="auto"  # Use auto GPU allocation
+MODEL=${1:-"WizardMath-7B-V1.1"}  # Default model if not specified
 
-# Function to run answer generation for a specific model on a specific GPU
+# Function to run answer generation for a specific model with auto GPU allocation
 run_model() {
     local model=$1
-    local gpu=$2
     
-    echo "Running answer generation for $model on GPU $gpu"
+    echo "Running answer generation for $model with automatic GPU allocation"
     python $SCRIPT_PATH \
-        --gpu $gpu \
+        --gpu auto \
         --subset_size $SUBSET_SIZE \
         --temperatures ${TEMPERATURES[@]} \
         --models $model \
@@ -25,9 +24,9 @@ run_model() {
 }
 
 # Main execution
-echo "Starting answer generation process for $DATASET dataset on GPU $GPU"
+echo "Starting answer generation process for $DATASET dataset with automatic GPU allocation"
 
-# Run the specified model on the specified GPU
-run_model "$MODEL" "$GPU"
+# Run the specified model with automatic GPU allocation
+run_model "$MODEL"
 
-echo "Answer generation completed for $MODEL on GPU $GPU"
+echo "Answer generation completed for $MODEL with automatic GPU allocation"
