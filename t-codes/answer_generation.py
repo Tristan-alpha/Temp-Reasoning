@@ -44,10 +44,11 @@ def generate_solution(model, tokenizer, question, temperature, device):
     return steps
 
 def main(args):
-    # Set CUDA device
-    torch.cuda.set_device(args.gpu)
-    device = torch.device(f"cuda:{args.gpu}")
-
+    # Get GPU ID from command-line arguments
+    gpu_id = args.gpu
+    device = torch.device(f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu")
+    print(f"Using device {device} for specific operations")
+    
     # Paths
     input_path = args.input_path
     output_dir = args.output_dir
@@ -114,13 +115,15 @@ def main(args):
         model_output_dir = os.path.join(output_dir, model_name, dataset_name)
         os.makedirs(model_output_dir, exist_ok=True)
         
-        # Load model and tokenizer
+        # Load model and tokenizer with auto device mapping
         tokenizer = AutoTokenizer.from_pretrained(model_path)
         model = AutoModelForCausalLM.from_pretrained(
             model_path, 
             torch_dtype=torch.float16,
-            device_map={"": device}
-        ).to(device)
+            device_map="auto"  # Use automatic device allocation
+        )
+        print(f"Model loaded with device map: {model.hf_device_map if hasattr(model, 'hf_device_map') else 'Not available'}")
+        model.eval()
         
         for temp in temperatures:
             print(f"Processing with temperature: {temp}")
@@ -189,7 +192,8 @@ if __name__ == "__main__":
                         help="List of temperature values to test")
     parser.add_argument("--subset_size", type=int, default=0,
                         help="Number of examples to process (0 = all)")
-    parser.add_argument("--gpu", type=int, default=0)
+    parser.add_argument("--gpu", type=int, default=0,
+                        help="GPU ID to use for specific operations")
     
     args = parser.parse_args()
     main(args)
