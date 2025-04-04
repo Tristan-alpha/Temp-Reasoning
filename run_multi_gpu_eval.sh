@@ -8,7 +8,7 @@ NUM_TEMPS=${#TEMPERATURES[@]}
 MODEL_SIZE="7B"  # Default model size
 
 # GPU Selection - modify this array to specify which GPUs to use
-GPU_LIST=(2 3 4)  # Default GPUs to use - Change this to set specific GPUs
+GPU_LIST=(4 5 6 7)  # Default GPUs to use - Change this to set specific GPUs
 NUM_GPUS=${#GPU_LIST[@]}  # Calculate number of GPUs from the list
 
 # Run settings

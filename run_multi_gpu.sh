@@ -51,7 +51,7 @@ create_local_model_session() {
     local model=$1
     local gpu=$2
     local temperature=$3
-    local session_name="answer_${model//[^a-zA-Z0-9]/_}_gpu${gpu}_temp${temperature}"
+    local session_name="answer_${model//[^a-zA-Z0-9]/_}_gpu${gpu}"
     
     echo "Creating screen session $session_name for $model on GPU $gpu with temperature $temperature"
     
