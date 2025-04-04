@@ -1,0 +1,10 @@
+,Model,Metric,Optimal_Temperature,Score
+0,Abel-7B-002,Solution_Level_Validity,0.6,0.5524834481537497
+0,Abel-7B-002,Solution_Level_Redundancy,0.3,0.26746940911747513
+0,Abel-7B-002,Solution_Score_Shepherd,0.0,0.5405271402994791
+0,WizardMath-7B-V1.1,Solution_Level_Validity,0.2,0.5766933479990499
+0,WizardMath-7B-V1.1,Solution_Level_Redundancy,1.5,0.23230401890662805
+0,WizardMath-7B-V1.1,Solution_Score_Shepherd,0.0,0.548403574625651
+0,gpt-4o-mini,Solution_Level_Validity,0.2,0.6119927477215727
+0,gpt-4o-mini,Solution_Level_Redundancy,1.6,0.3166199101010958
+0,gpt-4o-mini,Solution_Score_Shepherd,0.5,0.7056351725260417

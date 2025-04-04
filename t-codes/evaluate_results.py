@@ -232,32 +232,54 @@ def evaluate_solution_with_math_shepherd(model, tokenizer, question, reasoning_s
         # and incorrect answers have low scores (~0.02)
         return step_scores, solution_scores  # Convert last tensor element to Python scalar
 
-def load_reasoneval_model(model_path, model_size, device):
+def load_reasoneval_model(model_path, model_size, devices=None):
     """Load the appropriate ReasonEval model based on model size"""
     print(f"Loading ReasonEval-{model_size} model from {model_path}...")
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     
+    print(f"Distributing ReasonEval-{model_size} model across GPUs: {devices}")
+
     if model_size == '34B':
-        model = ReasonEval_34B.from_pretrained(model_path).to(device)
+        # Use device_map='auto' to automatically distribute across available GPUs
+        # If specific devices are provided, use them
+
+        model = ReasonEval_34B.from_pretrained(
+            model_path,
+            device_map="auto",  # Automatically distribute across GPUs
+            torch_dtype=torch.float16  # Use half-precision to reduce memory usage
+        )
+
     else:  # Default to 7B
-        model = ReasonEval_7B.from_pretrained(model_path).to(device)
+
+        model = ReasonEval_7B.from_pretrained(
+            model_path,
+            device_map="auto",  # Automatically distribute across GPUs
+            torch_dtype=torch.float16  # Use half-precision to reduce memory usage
+        )
+
+    print("Model loaded with device map:", model.hf_device_map if hasattr(model, "hf_device_map") else "Not available")
     
     model.eval()
     return model, tokenizer
 
 def main(args):
-
-    # Set CUDA device   
-    torch.cuda.set_device(args.gpu)
-    device = torch.device(f"cuda:{args.gpu}")
+    # Handle multiple GPUs or single GPU
+    gpu_devices = args.gpu if isinstance(args.gpu, list) else [args.gpu]
+    
+    # For 7B model or when using a single GPU
+    if args.model_size == "7B":
+        # Set primary CUDA device for smaller models or single GPU operations
+        # torch.cuda.set_device(gpu_devices[0])
+        device = torch.device(f"cuda:{gpu_devices[0]}")
+        print(f"Using GPU {gpu_devices[0]} as primary device")
+    else:
+        # For 34B model with multiple GPUs, we'll use device_map in the model loading
+        print(f"Using multiple GPUs: {gpu_devices}")
+        device = torch.device(f"cuda:{gpu_devices[0]}")  # Primary device for other operations
 
     # Path to results from temperature study
     results_dir = args.results_dir
     dataset_name = args.dataset_name
-    # detailed_dir = os.path.join(args.output_dir, 'detailed_results')
-    # aggregated_dir = os.path.join(args.output_dir, 'aggregated_results')    
-    # os.makedirs(detailed_dir, exist_ok=True)
-    # os.makedirs(aggregated_dir, exist_ok=True)
     
     # Get models to evaluate from command line arguments
     models_to_evaluate = args.models
@@ -292,7 +314,7 @@ def main(args):
     
     # Load ReasonEval model with selected size
     reasoneval_path = args.reasoneval_path
-    reasoneval_model, reasoneval_tokenizer = load_reasoneval_model(reasoneval_path, args.model_size, device)
+    reasoneval_model, reasoneval_tokenizer = load_reasoneval_model(reasoneval_path, args.model_size, gpu_devices)
     
     # Load Math-Shepherd model
     print("Loading Math-Shepherd model...")
@@ -435,7 +457,7 @@ if __name__ == "__main__":
     parser.add_argument("--temperatures", type=float, nargs='+',
                         default=[0.1, 0.3, 0.6, 1.0, 1.3, 1.6, 2.0],
                         help="List of temperature values to test")
-    parser.add_argument("--gpu", type=int, default=0)
+    parser.add_argument("--gpu", type=int, nargs='+', default=0)
     args = parser.parse_args()
     
     os.makedirs(args.output_dir, exist_ok=True)
