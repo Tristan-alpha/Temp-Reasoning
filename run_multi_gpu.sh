@@ -7,7 +7,7 @@ SUBSET_SIZE=0
 GPU=0
 
 # Temperature settings
-TEMPERATURES=(0.1 0.3 0.6 1.0 1.3 1.6 2.0)
+TEMPERATURES=(1.5 1.6)
 # Uncomment alternative temperature configurations if needed
 # TEMPERATURES=(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6)
 # TEMPERATURES=(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1)
@@ -19,8 +19,8 @@ API_KEY=sk-dqbCjalqSxgKaqe4YyNGGByaNLFk6vv0gXp0LnErebFmTZkx
 API_KEY_DEEPSEEK=sk-a00c3e30d7524683883aa59f82191ae4
 
 # Run settings
-RUN_LOCAL=true  # Whether to run local models
-RUN_API=false   # Whether to run API models
+RUN_LOCAL=false  # Whether to run local models
+RUN_API=true   # Whether to run API models
 
 # Local Models to evaluate (add more models as needed)
 LOCAL_MODELS=(
@@ -30,13 +30,13 @@ LOCAL_MODELS=(
 
 # API Models to evaluate
 API_MODELS=(
-    "gpt-4o-mini"
+    # "gpt-4o-mini"
     "deepseek-chat"
-    "deepseek-reasoner"
-    "deepseek-v3"
-    "deepseek-r1"
-    "claude-3-7-sonnet-20250219"
-    "gemini-2.0-flash"
+    # "deepseek-reasoner"
+    # "deepseek-v3"
+    # "deepseek-r1"
+    # "claude-3-7-sonnet-20250219"
+    # "gemini-2.0-flash"
 )
 
 # Ensure the hybrid dataset exists
@@ -78,7 +78,7 @@ create_api_model_session() {
         api_key=$API_KEY
     fi
     # Create detached screen session
-    screen -dmS "$session_name" bash -c "cd /home/dazhou/ReasonEval && python $API_SCRIPT_PATH --api_key \"$api_key\" --base_url \"$base_url\" --dataset_name $DATASET --models \"$model\" --temperatures ${TEMPERATURES[@]} --subset_size $SUBSET_SIZE; exec bash"
+    screen -dmS "$session_name" bash -c "cd /home/dazhou/ReasonEval && python $API_SCRIPT_PATH --api_key \"$api_key\" --base_url \"$base_url\" --dataset_name $DATASET --models \"$model\" --temperatures ${TEMPERATURES[*]} --subset_size $SUBSET_SIZE; exec bash"
     
     echo "API screen session $session_name created"
 }
