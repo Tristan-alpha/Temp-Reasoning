@@ -8,19 +8,35 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_dataset
 
 # Function to generate solution with a model
-def generate_solution(model, tokenizer, question, temperature):
-    prompt = f"Question: {question}\n\nProvide a step-by-step solution:"
-    
+def generate_solution(model, model_name, tokenizer, question, temperature):
+    if model_name == "Abel-7B-002" or "WizardMath-7B-V1.1":
+        prompt = f"Question: {question}\n\nProvide a step-by-step solution:"
+    else:
+        prompt = f"Solve math problems step-by-step. You MUST end each COMPLETE step with a double newline (\\n\\n). Question: {question}"
+
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     
+    # To do: top_p, top_k's settings
     with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_length=1024,
-            temperature=temperature,
-            do_sample=(temperature > 0),
-            pad_token_id=tokenizer.eos_token_id
-        )
+        if temperature == 0:
+            # 使用纯贪婪解码
+            outputs = model.generate(
+                **inputs,
+                max_length=4096,
+                do_sample=False,  # 明确使用贪婪解码
+                pad_token_id=tokenizer.eos_token_id
+            )
+        else:
+            # 使用采样
+            outputs = model.generate(
+                **inputs,
+                max_length=4096,
+                temperature=temperature,
+                do_sample=True,  # 使用采样
+                top_p=0.95,  # 可选：添加nucleus sampling
+                top_k=20,    # 可选：添加top-k sampling
+                pad_token_id=tokenizer.eos_token_id
+            )
     
     solution = tokenizer.decode(outputs[0], skip_special_tokens=True)
     # Extract just the solution part
@@ -29,18 +45,30 @@ def generate_solution(model, tokenizer, question, temperature):
     # Format solution steps
     steps = []
     step_num = 1
-    
-    # Split by lines and process each line that looks like a step
-    for line in solution.split('\n'):
-        line = line.strip()
-        if line:
-            # Check if the line already starts with Step N:
-            if re.match(r'^Step \d+:', line):
-                steps.append(line)
-            else:
-                # Add step number
-                steps.append(f"Step {step_num}: {line}")
-                step_num += 1
+
+    if model_name == "Abel-7B-002" or "WizardMath-7B-V1.1":
+        # Split by lines and process each line that looks like a step
+        for line in solution.split('\n'):
+            line = line.strip()
+            if line:
+                # Check if the line already starts with Step N:
+                if re.match(r'^Step \d+:', line):
+                    steps.append(line)
+                else:
+                    # Add step number
+                    steps.append(f"Step {step_num}: {line}")
+                    step_num += 1
+    else:
+        paragraphs = [p.strip() for p in re.split(r'\n\s*\n|\\n\s*\\n', solution) if p.strip()]
+        # If we have reasonable step divisions from triple newlines, use them
+        if paragraphs and len(paragraphs) > 1:
+            for i, paragraph in enumerate(paragraphs):
+                steps.append(f"Step {i+1}: {paragraph}")
+        else:
+            # Last resort: If no step structure is detected, use double newlines as fallback
+            paragraphs = [p.strip() for p in solution.split('\n') if p.strip()]
+            for i, paragraph in enumerate(paragraphs):
+                steps.append(f"Step {i+1}: {paragraph}")
     
     return steps
 
@@ -99,7 +127,12 @@ def main(args):
     
     model_paths = {
         'Abel-7B-002': 'GAIR/Abel-7B-002',
-        'WizardMath-7B-V1.1': 'WizardLMTeam/WizardMath-7B-V1.1'
+        'WizardMath-7B-V1.1': 'WizardLMTeam/WizardMath-7B-V1.1',
+        
+        'Qwen3-0.6B': 'Qwen/Qwen3-0.6B',
+        'Qwen3-4B': 'Qwen/Qwen3-4B',
+        'Qwen3-8B': 'Qwen/Qwen3-8B',
+        'Qwen3-32B': 'Qwen/Qwen3-32B'
     }
 
     for model in models:
@@ -151,7 +184,7 @@ def main(args):
                 question, uuid, source = dataset_extraction(item, dataset_name)
                 
                 try:
-                    solution_steps = generate_solution(model, tokenizer, question, temp)
+                    solution_steps = generate_solution(model, model_name, tokenizer, question, temp)
                     
                     # Create result object with only uuid, question, source and model_output_steps
                     result = {
