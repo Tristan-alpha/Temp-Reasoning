@@ -120,7 +120,7 @@ def load_temperature_results(results_dir, model_name, dataset_name, temperature)
         results = json.load(f)
     return results
 
-def evaluate_solution_with_reasoneval(model, tokenizer, question, reasoning_steps, device):
+def evaluate_solution_with_reasoneval(model, tokenizer, question, reasoning_steps):
     """Evaluate reasoning steps with ReasonEval model"""
     PROMPT_FORMAT = "Question:\n{input}\nAnswer:\nLet's think step by step.\n"
     step_separator = f"{tokenizer.pad_token}"
@@ -152,7 +152,7 @@ def evaluate_solution_with_reasoneval(model, tokenizer, question, reasoning_step
     
     # Adjusting for ReasonEval-7B specifically
     adjusted_token_ids = [1] + adjusted_token_ids  # Adjusting to recover the first token_ids
-    adjusted_token_ids = torch.tensor([adjusted_token_ids]).to(device)
+    adjusted_token_ids = torch.tensor([adjusted_token_ids]).to(model.device)
     
     # Skip the first two separators (beginning and ending of the problem)
     if len(labeled_token_indices) > 2:
@@ -185,7 +185,7 @@ def evaluate_solution_with_reasoneval(model, tokenizer, question, reasoning_step
     
     return step_level_validity_scores, step_level_redundancy_scores, solution_level_validity_scores, solution_level_redundancy_scores
 
-def evaluate_solution_with_math_shepherd(model, tokenizer, question, reasoning_steps, device):
+def evaluate_solution_with_math_shepherd(model, tokenizer, question, reasoning_steps):
     """Evaluate correctness of the solution with math-shepherd model"""
     # Define special tokens
     step_tag = "ки"
@@ -208,7 +208,7 @@ def evaluate_solution_with_math_shepherd(model, tokenizer, question, reasoning_s
     input_for_prm = f"{question} {formatted_output}"
     
     # Convert to tensor and move to device
-    input_ids = torch.tensor([tokenizer.encode(input_for_prm)]).to(device)
+    input_ids = torch.tensor([tokenizer.encode(input_for_prm)]).to(model.device)
     
     # Get model prediction (logits)
     with torch.no_grad():
@@ -256,11 +256,6 @@ def load_reasoneval_model(model_path, model_size):
     return model, tokenizer
 
 def main(args):
-    # Get GPU ID from command-line arguments
-    gpu_id = args.gpu
-    device = torch.device(f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu")
-    print(f"Using device {device} for specific operations")
-    
     # Path to results from temperature study
     results_dir = args.results_dir
     dataset_name = args.dataset_name
@@ -362,12 +357,12 @@ def main(args):
                 try:
                     # Evaluate with ReasonEval
                     _, _, solution_validity, solution_redundancy = evaluate_solution_with_reasoneval(
-                        reasoneval_model, reasoneval_tokenizer, question, steps, device
+                        reasoneval_model, reasoneval_tokenizer, question, steps
                     )
                     
                     # Evaluate correctness with Math-Shepherd
                     _, solution_shepherd_score = evaluate_solution_with_math_shepherd(
-                        shepherd_model, shepherd_tokenizer, question, steps, device
+                        shepherd_model, shepherd_tokenizer, question, steps
                     )
                     
                     # Add to DataFrame
@@ -441,7 +436,6 @@ if __name__ == "__main__":
     parser.add_argument("--temperatures", type=float, nargs='+',
                         default=[0.1, 0.3, 0.6, 1.0, 1.3, 1.6, 2.0],
                         help="List of temperature values to test")
-    parser.add_argument("--gpu", type=int, default=0, help="GPU ID to use for specific operations")
     args = parser.parse_args()
     
     os.makedirs(args.output_dir, exist_ok=True)

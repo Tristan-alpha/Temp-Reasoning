@@ -1,17 +1,17 @@
 import json
 import torch
 import argparse
-from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
 import os
 import re
+from tqdm import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_dataset
 
 # Function to generate solution with a model
-def generate_solution(model, tokenizer, question, temperature, device):
+def generate_solution(model, tokenizer, question, temperature):
     prompt = f"Question: {question}\n\nProvide a step-by-step solution:"
     
-    inputs = tokenizer(prompt, return_tensors="pt").to(device)
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     
     with torch.no_grad():
         outputs = model.generate(
@@ -58,8 +58,8 @@ def dataset_extraction(item, dataset_name):
     
     elif dataset_name == "aime":
         source = dataset_name
-        uuid = "unknown"
-        question = item.get("problem", "")
+        uuid = str(item['id'])
+        question = item['problem']
         return question, uuid, source
     
     else:
@@ -80,21 +80,16 @@ def load_json_data(file_path):
 
 
 def main(args):
-    # Get GPU ID from command-line arguments
-    gpu_id = args.gpu
     input_path = args.input_path
     output_dir = args.output_dir
     dataset_name = args.dataset_name
     models = args.models
     temperatures = args.temperatures
 
-    device = torch.device(f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu")
-    print(f"Using device {device} for specific operations")
-    
     # Load the dataset
 
-    if dataset_name == "AIME":
-        dataset = load_dataset("AI-MO/aimo-validation-aime")
+    if dataset_name == "aime":
+        dataset = load_dataset("AI-MO/aimo-validation-aime", split="train")
 
     else:
         dataset_path = os.path.join(input_path, f"{dataset_name}.json")
@@ -156,7 +151,7 @@ def main(args):
                 question, uuid, source = dataset_extraction(item, dataset_name)
                 
                 try:
-                    solution_steps = generate_solution(model, tokenizer, question, temp, device)
+                    solution_steps = generate_solution(model, tokenizer, question, temp)
                     
                     # Create result object with only uuid, question, source and model_output_steps
                     result = {
@@ -198,8 +193,6 @@ if __name__ == "__main__":
                         help="List of temperature values to test")
     parser.add_argument("--subset_size", type=int, default=0,
                         help="Number of examples to process (0 = all)")
-    parser.add_argument("--gpu", type=int, default=0,
-                        help="GPU ID to use for specific operations")
     
     args = parser.parse_args()
     main(args)
