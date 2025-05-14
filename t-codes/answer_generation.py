@@ -5,6 +5,7 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import os
 import re
+from datasets import load_dataset
 
 # Function to generate solution with a model
 def generate_solution(model, tokenizer, question, temperature, device):
@@ -43,70 +44,88 @@ def generate_solution(model, tokenizer, question, temperature, device):
     
     return steps
 
+def dataset_extraction(item, dataset_name):
+
+    if dataset_name == "hybrid_reasoning":
+        source = item.get("source", "")
+        if source == "math":
+            uuid = item.get("unique_id", "unknown")
+            question = item.get("problem", "")
+        elif source == "mr-gsm8k":
+            uuid = item.get("uuid", "unknown")
+            question = item.get("question", "")
+        return question, uuid, source
+    
+    elif dataset_name == "aime":
+        source = dataset_name
+        uuid = "unknown"
+        question = item.get("problem", "")
+        return question, uuid, source
+    
+    else:
+        print("Invalid dataset.")
+        return None, None
+
+def load_json_data(file_path):
+    dataset = []
+    with open(file_path, 'r') as f:
+        for line in f:
+            if line.strip():
+                try:
+                    obj = json.loads(line)
+                    dataset.append(obj)
+                except json.JSONDecodeError:
+                    print(f"Warning: Could not parse line as JSON: {line[:50]}...")
+    return dataset
+
+
 def main(args):
     # Get GPU ID from command-line arguments
     gpu_id = args.gpu
+    input_path = args.input_path
+    output_dir = args.output_dir
+    dataset_name = args.dataset_name
+    models = args.models
+    temperatures = args.temperatures
+
     device = torch.device(f"cuda:{gpu_id}" if torch.cuda.is_available() else "cpu")
     print(f"Using device {device} for specific operations")
     
-    # Paths
-    input_path = args.input_path
-    output_dir = args.output_dir
-    
-    # Extract dataset name from input path if not provided
-    dataset_name = args.dataset_name
+    # Load the dataset
 
-    # Create output directory if it doesn't exist
+    if dataset_name == "AIME":
+        dataset = load_dataset("AI-MO/aimo-validation-aime")
+
+    else:
+        dataset_path = os.path.join(input_path, f"{dataset_name}.json")
+        dataset = load_json_data(dataset_path)
+
     os.makedirs(output_dir, exist_ok=True)
-
-    # Define the model paths
+    
     model_paths = {
         'Abel-7B-002': 'GAIR/Abel-7B-002',
         'WizardMath-7B-V1.1': 'WizardLMTeam/WizardMath-7B-V1.1'
     }
-    
-    # Get models to evaluate from command line arguments
-    models_to_evaluate = args.models
-    
-    # Validate requested models
-    for model in models_to_evaluate:
+
+    for model in models:
         if model not in model_paths:
             print(f"Warning: Model '{model}' is not recognized. Available models: {', '.join(model_paths.keys())}")
     
-    # Filter to only include valid models
-    models_to_evaluate = [model for model in models_to_evaluate if model in model_paths]
+    # Check whether it's in model_paths, select them
+    models = [model for model in models if model in model_paths]
     
-    if not models_to_evaluate:
+    if not models:
         print("Error: No valid models specified. Exiting.")
         return
     
-    # Create dictionary of models to evaluate with their paths
-    models = {model: model_paths[model] for model in models_to_evaluate}
-    
-    # Temperature settings to test
-    temperatures = args.temperatures
+    models = {model: model_paths[model] for model in models}
 
-    # Load the dataset
-    def load_json_data(file_path):
-        dataset = []
-        with open(file_path, 'r') as f:
-            for line in f:
-                if line.strip():
-                    try:
-                        obj = json.loads(line)
-                        dataset.append(obj)
-                    except json.JSONDecodeError:
-                        print(f"Warning: Could not parse line as JSON: {line[:50]}...")
-        return dataset
-
-    dataset_path = os.path.join(input_path, f"{dataset_name}.json")
-    dataset = load_json_data(dataset_path)
-    
-    # Only process the subset if specified
     if args.subset_size > 0 and args.subset_size < len(dataset):
         print(f"Using subset of {args.subset_size} examples from the dataset")
         dataset = dataset[:args.subset_size]
     
+    #---------------------------------------------------------------------------
+
     # Process each model
     for model_name, model_path in models.items():
         print(f"Loading model: {model_name} from {model_path}")
@@ -115,7 +134,7 @@ def main(args):
         model_output_dir = os.path.join(output_dir, model_name, dataset_name)
         os.makedirs(model_output_dir, exist_ok=True)
         
-        # Load model and tokenizer with auto device mapping
+
         tokenizer = AutoTokenizer.from_pretrained(model_path)
         model = AutoModelForCausalLM.from_pretrained(
             model_path, 
@@ -124,30 +143,17 @@ def main(args):
         )
         print(f"Model loaded with device map: {model.hf_device_map if hasattr(model, 'hf_device_map') else 'Not available'}")
         model.eval()
+
         
         for temp in temperatures:
             print(f"Processing with temperature: {temp}")
             
             counter = 0
             results = []
-            
+
             for item in tqdm(dataset):
-                # Determine the source of the problem (math or mr-gsm8k)
-                source = item.get("source", "")
-                
-                # Use appropriate fields based on the source
-                if source == "math" or dataset_name == "math":
-                    uuid = item.get("unique_id", "unknown")
-                    question = item.get("problem", "")
-                else:  # source == "mr-gsm8k" or default to mr-gsm8k format
-                    uuid = item.get("uuid", "unknown")
-                    question = item.get("question", "")
-                
-                if not question:
-                    print(f"Skipping item {uuid} as it has no question")
-                    continue
-                
-                print(f"Processing question: {uuid}")
+
+                question, uuid, source = dataset_extraction(item, dataset_name)
                 
                 try:
                     solution_steps = generate_solution(model, tokenizer, question, temp, device)
