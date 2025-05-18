@@ -30,7 +30,7 @@ def load_aggregated_results(file_paths, output_path="/home/dazhou/ReasonEval/eva
                 # Match a wider range of model names from your workspace
                 model_names = [
                     'Abel-7B-002', 'WizardMath-7B-V1.1', 'gpt-4o-mini', 'deepseek-v3', 
-                    'deepseek-r1', 'deepseek-chat', 'deepseek-reasoner',
+                    'deepseek-chat',
                     'claude-3-7-sonnet-20250219', 'gemini-2.0-flash'
                 ]
                 for part in path_parts:
@@ -131,39 +131,39 @@ def _create_metric_comparison_plot_for_eval_model(df, output_path, figsize=(15, 
     ax3.grid(True, linestyle='--', alpha=0.7)
     ax3.set_xticks(all_temps)
     
-    # Plot 4: All metrics normalized and combined
-    ax4 = plt.subplot(gs[1, 1])
+    # # Plot 4: All metrics normalized and combined
+    # ax4 = plt.subplot(gs[1, 1])
     
-    # Normalize each metric to 0-1 scale for better comparison
-    metrics = ['Solution_Level_Validity', 'Solution_Level_Redundancy', 'Solution_Score_Shepherd']
-    models = df['Model'].unique()
+    # # Normalize each metric to 0-1 scale for better comparison
+    # metrics = ['Solution_Level_Validity', 'Solution_Level_Redundancy', 'Solution_Score_Shepherd']
+    # models = df['Model'].unique()
     
-    normalized_data = []
-    for model in models:
-        model_data = df[df['Model'] == model]
-        for metric in metrics:
-            values = model_data[metric].values
-            min_val = values.min()
-            max_val = values.max()
-            range_val = max_val - min_val if max_val > min_val else 1.0
+    # normalized_data = []
+    # for model in models:
+    #     model_data = df[df['Model'] == model]
+    #     for metric in metrics:
+    #         values = model_data[metric].values
+    #         min_val = values.min()
+    #         max_val = values.max()
+    #         range_val = max_val - min_val if max_val > min_val else 1.0
             
-            for temp, value in zip(model_data['Temperature'], values):
-                norm_value = (value - min_val) / range_val
-                normalized_data.append({
-                    'Model': model,
-                    'Temperature': temp,
-                    'Metric': metric,
-                    'Value': norm_value
-                })
+    #         for temp, value in zip(model_data['Temperature'], values):
+    #             norm_value = (value - min_val) / range_val
+    #             normalized_data.append({
+    #                 'Model': model,
+    #                 'Temperature': temp,
+    #                 'Metric': metric,
+    #                 'Value': norm_value
+    #             })
     
-    norm_df = pd.DataFrame(normalized_data)
-    sns.lineplot(data=norm_df, x='Temperature', y='Value', hue='Metric', 
-                 style='Model', markers=True, dashes=False, ax=ax4)
-    ax4.set_title('Normalized Metrics Comparison', fontsize=14, fontweight='bold')
-    ax4.set_xlabel('Temperature', fontsize=12)
-    ax4.set_ylabel('Normalized Score', fontsize=12)
-    ax4.grid(True, linestyle='--', alpha=0.7)
-    ax4.set_xticks(all_temps)
+    # norm_df = pd.DataFrame(normalized_data)
+    # sns.lineplot(data=norm_df, x='Temperature', y='Value', hue='Metric', 
+    #              style='Model', markers=True, dashes=False, ax=ax4)
+    # ax4.set_title('Normalized Metrics Comparison', fontsize=14, fontweight='bold')
+    # ax4.set_xlabel('Temperature', fontsize=12)
+    # ax4.set_ylabel('Normalized Score', fontsize=12)
+    # ax4.grid(True, linestyle='--', alpha=0.7)
+    # ax4.set_xticks(all_temps)
     
     plt.suptitle(f'Metrics Comparison Across Models{dataset_title}\nEvaluation Model: {eval_model}', fontsize=16, fontweight='bold')
     plt.tight_layout()
@@ -627,7 +627,7 @@ def main():
     parser.add_argument("--output_dir", type=str, default="/home/dazhou/ReasonEval/evaluation_results/visualizations",
                        help="Directory to save visualizations")
     parser.add_argument("--models", type=str, nargs='+', 
-                       default=['Abel-7B-002', 'WizardMath-7B-V1.1', 'gpt-4o-mini', 'deepseek-chat', 'deepseek-reasoner'],
+                       default=['Abel-7B-002', 'WizardMath-7B-V1.1', 'gpt-4o-mini', 'deepseek-chat'],
                        help="Models to include in visualizations")
     parser.add_argument("--datasets", type=str, nargs='+', 
                        default=['hybrid_reasoning'],

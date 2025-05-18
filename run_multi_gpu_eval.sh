@@ -3,9 +3,9 @@
 # Configuration variables
 SCRIPT_PATH="/home/dazhou/ReasonEval/t-codes/evaluate_results.py"
 DATASET="hybrid_reasoning"
-TEMPERATURES=(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1)
-MODEL_SIZE="7B"  # Default model size
-GPU=4
+# TEMPERATURES=(1.5 1.6)
+TEMPERATURES=(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6)
+MODEL_SIZE="34B"  # Default model size
 
 # Local Models to evaluate (add more models as needed)
 MODELS=(
@@ -43,7 +43,7 @@ create_eval_session() {
     echo "Creating evaluation screen session $session_name for $model using automatic GPU allocation"
     
     # Create detached screen session with specified temperatures
-    screen -dmS "$session_name" bash -c "cd /home/dazhou/ReasonEval && python $SCRIPT_PATH --models \"$model\" --dataset_name $DATASET --temperatures ${TEMPERATURES[@]} --model_size $MODEL_SIZE --gpu $GPU --reasoneval_path $REASONEVAL_PATH; exec bash"
+    screen -dmS "$session_name" bash -c "cd /home/dazhou/ReasonEval && python $SCRIPT_PATH --models \"$model\" --dataset_name $DATASET --temperatures ${TEMPERATURES[*]} --model_size $MODEL_SIZE --reasoneval_path $REASONEVAL_PATH; exec bash"
     
     echo "Evaluation screen session $session_name created"
 }
