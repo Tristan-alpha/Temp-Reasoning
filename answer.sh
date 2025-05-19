@@ -7,7 +7,11 @@ DATASET="aime"
 SUBSET_SIZE=0
 TEMPERATURES=(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5)
 
-echo "Starting answer generation process for $DATASET dataset with automatic device allocation"
+CUDA_VISIBLE_DEVICES=0,1
+
+echo "Starting answer generation process for $DATASET dataset with GPU $CUDA_VISIBLE_DEVICES"
+
+export CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES
 
 python $SCRIPT_PATH \
     --subset_size $SUBSET_SIZE \
@@ -15,4 +19,4 @@ python $SCRIPT_PATH \
     --models $MODEL \
     --dataset_name $DATASET
 
-echo "Answer generation completed for $MODEL with automatic device allocation"
+echo "Answer generation completed for $MODEL using GPU $CUDA_VISIBLE_DEVICES"

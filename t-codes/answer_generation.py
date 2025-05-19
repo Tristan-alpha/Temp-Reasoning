@@ -6,47 +6,74 @@ import re
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_dataset
+# Add vLLM imports
+from vllm import LLM, SamplingParams
 
 # Function to generate solution with a model
-def generate_solution(model, model_name, tokenizer, question, temperature):
-    if model_name == "Abel-7B-002" or "WizardMath-7B-V1.1":
+def generate_solution(model, model_name, tokenizer, question, temperature, use_vllm=False):
+    if model_name == "Abel-7B-002" or model_name == "WizardMath-7B-V1.1":
         prompt = f"Question: {question}\n\nProvide a step-by-step solution:"
     else:
         prompt = f"Solve math problems step-by-step. You MUST end each COMPLETE step with a double newline (\\n\\n). Question: {question}"
 
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-    
-    # To do: top_p, top_k's settings
-    with torch.no_grad():
+    if use_vllm:
+        # vLLM generation
         if temperature == 0:
-            # 使用纯贪婪解码
-            outputs = model.generate(
-                **inputs,
-                max_length=4096,
-                do_sample=False,  # 明确使用贪婪解码
-                pad_token_id=tokenizer.eos_token_id
+            # Greedy decoding
+            sampling_params = SamplingParams(
+                temperature=1.0,  # any value, will be ignored in greedy mode
+                max_tokens=4096,
+                use_beam_search=False,
+                top_p=1.0,
+                top_k=-1,
+                skip_special_tokens=True
             )
         else:
-            # 使用采样
-            outputs = model.generate(
-                **inputs,
-                max_length=4096,
+            # Sampling
+            sampling_params = SamplingParams(
                 temperature=temperature,
-                do_sample=True,  # 使用采样
-                top_p=0.95,  # 可选：添加nucleus sampling
-                top_k=20,    # 可选：添加top-k sampling
-                pad_token_id=tokenizer.eos_token_id
+                max_tokens=4096,
+                top_p=0.95,
+                top_k=20,
+                skip_special_tokens=True
             )
-    
-    solution = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    # Extract just the solution part
-    solution = solution[len(prompt):].strip()
+        
+        outputs = model.generate([prompt], sampling_params)
+        solution = outputs[0].outputs[0].text
+    else:
+        # Original HuggingFace generation
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+        
+        with torch.no_grad():
+            if temperature == 0:
+                # 使用纯贪婪解码
+                outputs = model.generate(
+                    **inputs,
+                    max_length=4096,
+                    do_sample=False,  # 明确使用贪婪解码
+                    pad_token_id=tokenizer.eos_token_id
+                )
+            else:
+                # 使用采样
+                outputs = model.generate(
+                    **inputs,
+                    max_length=4096,
+                    temperature=temperature,
+                    do_sample=True,  # 使用采样
+                    top_p=0.95,  # 可选：添加nucleus sampling
+                    top_k=20,    # 可选：添加top-k sampling
+                    pad_token_id=tokenizer.eos_token_id
+                )
+        
+        solution = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        # Extract just the solution part
+        solution = solution[len(prompt):].strip()
     
     # Format solution steps
     steps = []
     step_num = 1
 
-    if model_name == "Abel-7B-002" or "WizardMath-7B-V1.1":
+    if model_name == "Abel-7B-002" or model_name == "WizardMath-7B-V1.1":
         # Split by lines and process each line that looks like a step
         for line in solution.split('\n'):
             line = line.strip()
@@ -71,6 +98,18 @@ def generate_solution(model, model_name, tokenizer, question, temperature):
                 steps.append(f"Step {i+1}: {paragraph}")
     
     return steps
+
+# Function to load a model with vLLM
+def load_model_with_vllm(model_path, dtype='half', tensor_parallel_size=None, gpu_memory_utilization=0.85, max_model_len=None):
+    """Load a model with vLLM for optimized inference across multiple GPUs"""
+    return LLM(
+        model=model_path,
+        dtype=dtype,
+        tensor_parallel_size=tensor_parallel_size,  # Number of GPUs to use for tensor parallelism
+        gpu_memory_utilization=gpu_memory_utilization,
+        max_model_len=max_model_len,
+        trust_remote_code=True
+    )
 
 def dataset_extraction(item, dataset_name):
 
@@ -113,6 +152,7 @@ def main(args):
     dataset_name = args.dataset_name
     models = args.models
     temperatures = args.temperatures
+    use_vllm = args.use_vllm
 
     # Load the dataset
 
@@ -162,17 +202,26 @@ def main(args):
         model_output_dir = os.path.join(output_dir, model_name, dataset_name)
         os.makedirs(model_output_dir, exist_ok=True)
         
+        if use_vllm:
+            print(f"Using vLLM for optimized inference with {args.tensor_parallel_size} GPUs")
+            model = load_model_with_vllm(
+                model_path,
+                dtype=args.vllm_dtype,
+                tensor_parallel_size=args.tensor_parallel_size,
+                gpu_memory_utilization=args.gpu_memory_utilization,
+                max_model_len=args.max_model_len
+            )
+            tokenizer = None  # Not needed for vLLM
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(model_path)
+            model = AutoModelForCausalLM.from_pretrained(
+                model_path, 
+                torch_dtype=torch.float16,
+                device_map="auto"  # Use automatic device allocation
+            )
+            print(f"Model loaded with device map: {model.hf_device_map if hasattr(model, 'hf_device_map') else 'Not available'}")
+            model.eval()
 
-        tokenizer = AutoTokenizer.from_pretrained(model_path)
-        model = AutoModelForCausalLM.from_pretrained(
-            model_path, 
-            torch_dtype=torch.float16,
-            device_map="auto"  # Use automatic device allocation
-        )
-        print(f"Model loaded with device map: {model.hf_device_map if hasattr(model, 'hf_device_map') else 'Not available'}")
-        model.eval()
-
-        
         for temp in temperatures:
             print(f"Processing with temperature: {temp}")
             
@@ -184,7 +233,7 @@ def main(args):
                 question, uuid, source = dataset_extraction(item, dataset_name)
                 
                 try:
-                    solution_steps = generate_solution(model, model_name, tokenizer, question, temp)
+                    solution_steps = generate_solution(model, model_name, tokenizer, question, temp, use_vllm=use_vllm)
                     
                     # Create result object with only uuid, question, source and model_output_steps
                     result = {
@@ -226,6 +275,18 @@ if __name__ == "__main__":
                         help="List of temperature values to test")
     parser.add_argument("--subset_size", type=int, default=0,
                         help="Number of examples to process (0 = all)")
+    parser.add_argument("--use_vllm", action="store_true",
+                        help="Use vLLM for optimized inference")
+    # Add new arguments for vLLM multi-GPU configuration
+    parser.add_argument("--tensor_parallel_size", type=int, default=None,
+                        help="Number of GPUs to use for tensor parallelism (None = auto)")
+    parser.add_argument("--gpu_memory_utilization", type=float, default=0.85,
+                        help="Fraction of GPU memory to use (0.0 to 1.0)")
+    parser.add_argument("--vllm_dtype", type=str, default="half", 
+                        choices=["half", "float16", "bfloat16", "float"],
+                        help="Data type for vLLM inference")
+    parser.add_argument("--max_model_len", type=int, default=None,
+                        help="Maximum sequence length for the model (None = auto)")
     
     args = parser.parse_args()
     main(args)

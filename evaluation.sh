@@ -16,7 +16,7 @@ fi
 echo "Running evaluation for $MODEL on dataset $DATASET with automatic GPU allocation"
 echo "Using ReasonEval-$MODEL_SIZE model"
 
-python /home/dazhou/ReasonEval/t-codes/evaluate_results.py \
+python3 /home/dazhou/ReasonEval/t-codes/evaluate_results.py \
     --gpu auto \
     --models "$MODEL" \
     --dataset_name $DATASET \
