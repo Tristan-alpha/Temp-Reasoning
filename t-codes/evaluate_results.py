@@ -275,6 +275,10 @@ def main(args):
         'deepseek-reasoner': 'deepseek-reasoner',
         'claude-3-7-sonnet-20250219': 'claude-3-7-sonnet-20250219',
         'gemini-2.0-flash': 'gemini-2.0-flash',
+        'Qwen3-0.6B': 'Qwen/Qwen3-0.6B',
+        'Qwen3-4B': 'Qwen/Qwen3-4B',
+        'Qwen3-8B': 'Qwen/Qwen3-8B',
+        'Qwen3-32B': 'Qwen/Qwen3-32B'
     }
     
     # Validate requested models

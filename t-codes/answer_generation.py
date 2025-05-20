@@ -275,17 +275,17 @@ if __name__ == "__main__":
                         help="List of temperature values to test")
     parser.add_argument("--subset_size", type=int, default=0,
                         help="Number of examples to process (0 = all)")
-    parser.add_argument("--use_vllm", action="store_true",
+    parser.add_argument("--use_vllm", default=True,
                         help="Use vLLM for optimized inference")
     # Add new arguments for vLLM multi-GPU configuration
     parser.add_argument("--tensor_parallel_size", type=int, default=None,
                         help="Number of GPUs to use for tensor parallelism (None = auto)")
-    parser.add_argument("--gpu_memory_utilization", type=float, default=0.85,
+    parser.add_argument("--gpu_memory_utilization", type=float, default=0.9,
                         help="Fraction of GPU memory to use (0.0 to 1.0)")
     parser.add_argument("--vllm_dtype", type=str, default="half", 
                         choices=["half", "float16", "bfloat16", "float"],
                         help="Data type for vLLM inference")
-    parser.add_argument("--max_model_len", type=int, default=None,
+    parser.add_argument("--max_model_len", type=int, default=4096,
                         help="Maximum sequence length for the model (None = auto)")
     
     args = parser.parse_args()
