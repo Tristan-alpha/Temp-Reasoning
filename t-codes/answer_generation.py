@@ -262,10 +262,10 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate solutions with different temperature settings')
     parser.add_argument("--input_path", type=str, default="/home/dazhou/ReasonEval/dataset",
-                        help="Path to the input dataset (dataset name will be extracted from filename if --dataset_name not provided)")
+                        help="Path to the input dataset directory")
     parser.add_argument("--dataset_name", type=str, default="hybrid_reasoning",
                         help="Name of the dataset being processed (defaults to hybrid_reasoning)")
-    parser.add_argument("--output_dir", type=str, default="/home/dazhou/ReasonEval/answer_by_models",
+    parser.add_argument("--output_dir", type=str, default="/home/dazhou/ReasonEval/evaluation_results",
                         help="Directory to save the results")
     parser.add_argument("--models", type=str, nargs='+', 
                         default=['Abel-7B-002', 'WizardMath-7B-V1.1'],
