@@ -30,7 +30,7 @@ def load_aggregated_results(file_paths, output_path="/home/dazhou/ReasonEval/eva
                 # Match a wider range of model names from your workspace
                 model_names = [
                     'Abel-7B-002', 'WizardMath-7B-V1.1', 'gpt-4o-mini', 'deepseek-v3', 
-                    'deepseek-chat',
+                    'deepseek-chat', 'Qwen3-8B', 'Claude-3-7-Sonnet-20250219', 'Gemini-2.0-Flash',
                     'claude-3-7-sonnet-20250219', 'gemini-2.0-flash'
                 ]
                 for part in path_parts:
@@ -40,7 +40,7 @@ def load_aggregated_results(file_paths, output_path="/home/dazhou/ReasonEval/eva
             
             # Find dataset name from path
             if 'Dataset' not in df.columns:
-                dataset_names = ['hybrid_reasoning', 'mr-gsm8k', 'aime']
+                dataset_names = ['hybrid_reasoning', 'mr-gsm8k', 'aime', 'MATH', 'math']
                 for part in path_parts:
                     if any(dataset_name in part for dataset_name in dataset_names):
                         df['Dataset'] = part
@@ -554,36 +554,21 @@ def prepare_output_directories(args):
     # Main output directory
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # Directory for each dataset if specified
-    if args.datasets:
-        for dataset in args.datasets:
-            os.makedirs(os.path.join(args.output_dir, dataset), exist_ok=True)
+    for dataset in args.datasets:
+        os.makedirs(os.path.join(args.output_dir, dataset), exist_ok=True)
     
-    # Directory for detailed distributions if requested
-    if args.detailed:
-        os.makedirs(os.path.join(args.output_dir, 'distributions'), exist_ok=True)
-        
     return os.path.join(args.output_dir, dataset)
 
 def analyze_by_dataset(df, args, datasets_dir):
     """Create visualizations separated by dataset"""
-    # Get all datasets in the data
-    if 'Dataset' in df.columns:
-        datasets = df['Dataset'].unique()
-    else:
-        datasets = args.datasets if args.datasets else ['default']
-        if 'Dataset' not in df.columns:
-            df['Dataset'] = 'default'
+
+    datasets = df['Dataset'].unique()
     
-    all_summaries = []
     
     # Create plots for each dataset
     for dataset in datasets:
         dataset_df = df[df['Dataset'] == dataset] if 'Dataset' in df.columns else df
         
-        # Skip if empty
-        if dataset_df.empty:
-            continue
             
         # Common visualizations for this dataset
         create_metric_comparison_plot(
@@ -598,15 +583,12 @@ def analyze_by_dataset(df, args, datasets_dir):
             dataset=dataset
         )
         
-        summary_df = create_optimal_temperature_plot(
+        create_optimal_temperature_plot(
             dataset_df,
             os.path.join(datasets_dir, 'optimal_temperature.png'),
             dataset=dataset
         )
         
-        # Add dataset info to summary
-        summary_df['Dataset'] = dataset
-        all_summaries.append(summary_df)
         
         create_trade_off_plot(
             dataset_df,
@@ -614,12 +596,6 @@ def analyze_by_dataset(df, args, datasets_dir):
             dataset=dataset
         )
     
-    # Combine all summaries
-    if all_summaries:
-        combined_summary = pd.concat(all_summaries)
-        combined_summary.to_csv(os.path.join(args.output_dir, 'optimal_temperature_summary.csv'), index=False)
-        print(f"Combined summary saved to: {os.path.join(args.output_dir, 'optimal_temperature_summary.csv')}")
-
 def main():
     parser = argparse.ArgumentParser(description="Visualize temperature evaluation results")
     parser.add_argument("--input_dir", type=str, default="/home/dazhou/ReasonEval/evaluation_results",
@@ -632,8 +608,12 @@ def main():
     parser.add_argument("--datasets", type=str, nargs='+', 
                        default=['hybrid_reasoning'],
                        help="Datasets to include in visualizations")
-    parser.add_argument("--detailed", action="store_true", 
-                       help="Create detailed distribution visualizations")
+    parser.add_argument("--evaluators", type=str, nargs='+',
+                       default=['ReasonEval_7B', 'ReasonEval_34B'],
+                       help="Evaluators to include in visualizations")
+    parser.add_argument("--temperatures", type=str, nargs='+',
+                       help="List of temperatures to analyze")
+
 
     args = parser.parse_args()
     
@@ -647,13 +627,11 @@ def main():
     for model in args.models:
         if args.datasets:
             for dataset in args.datasets:
-                # Update path to include ReasonEval_7B and ReasonEval_34B subdirectories
-                potential_paths = [
-                    os.path.join(args.input_dir, model, dataset, "ReasonEval_7B", "aggregated.csv"),
-                    os.path.join(args.input_dir, model, dataset, "ReasonEval_34B", "aggregated.csv")
-                ]
-                agg_files.extend([p for p in potential_paths if os.path.exists(p)])
-
+                # Update path to include evaluator subdirectories
+                for evaluator in args.evaluators:
+                    potential_path = os.path.join(args.input_dir, model, dataset, evaluator, "aggregated.csv")
+                    if os.path.exists(potential_path):
+                        agg_files.append(potential_path)
     
     if not agg_files:
         print("No aggregated files found. Please check your input directory and model names.")
@@ -663,17 +641,14 @@ def main():
         # Load and combine data
         df = load_aggregated_results(agg_files)
         
+        # Filter by temperature if specified
+        if args.temperatures:
+            temps = [float(t) for t in args.temperatures]
+            df = df[df['Temperature'].isin(temps)]
+        
         # Analyze data by dataset
         analyze_by_dataset(df, args, datasets_dir)
         
-        # Create score distribution plots if detailed flag is set
-        if args.detailed:
-            create_score_distribution_plots(
-                args.input_dir, 
-                os.path.join(args.output_dir, 'distributions'),
-                args.models,
-                args.datasets
-            )
         
         print("Visualization complete!")
         
