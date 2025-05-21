@@ -1,0 +1,3 @@
+Model,Dataset,Temperature,Source,Solution_Level_Validity,Solution_Level_Redundancy,Solution_Score_Shepherd
+Qwen3-0.6B,aime,0.1,aime,0.2931204054090712,0.42722303602430556,0.1488555908203125
+Qwen3-0.6B,aime,0.2,aime,0.27382100423177086,0.4263580322265625,0.14920934041341147

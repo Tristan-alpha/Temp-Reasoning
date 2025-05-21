@@ -40,7 +40,7 @@ def load_aggregated_results(file_paths, output_path="/home/dazhou/ReasonEval/eva
             
             # Find dataset name from path
             if 'Dataset' not in df.columns:
-                dataset_names = ['hybrid_reasoning', 'mr-gsm8k']
+                dataset_names = ['hybrid_reasoning', 'mr-gsm8k', 'aime']
                 for part in path_parts:
                     if any(dataset_name in part for dataset_name in dataset_names):
                         df['Dataset'] = part
