@@ -265,7 +265,7 @@ if __name__ == "__main__":
                         help="Path to the input dataset directory")
     parser.add_argument("--dataset_name", type=str, default="hybrid_reasoning",
                         help="Name of the dataset being processed (defaults to hybrid_reasoning)")
-    parser.add_argument("--output_dir", type=str, default="/home/dazhou/ReasonEval/evaluation_results",
+    parser.add_argument("--output_dir", type=str, default="/home/dazhou/ReasonEval/answer_by_models",
                         help="Directory to save the results")
     parser.add_argument("--models", type=str, nargs='+', 
                         default=['Abel-7B-002', 'WizardMath-7B-V1.1'],
