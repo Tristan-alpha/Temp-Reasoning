@@ -2,7 +2,7 @@
 
 # Configure visualization for models on AIME datasets
 SCRIPT_PATH="/home/dazhou/ReasonEval/t-codes/visualize_temperature_results.py"
-MODELS="Abel-7B-002 WizardMath-7B-V1.1 Qwen3-0.6B Qwen3-4B Qwen3-8B"
+MODELS="Abel-7B-002 WizardMath-7B-V1.1 Qwen3-0.6B Qwen3-4B Qwen3-8B Qwen3-32B"
 DATASET="aime"
 INPUT_DIR="/home/dazhou/ReasonEval/evaluation_results"
 OUTPUT_DIR="/home/dazhou/ReasonEval/visualizations"

@@ -172,7 +172,9 @@ def main(args):
         'Qwen3-0.6B': 'Qwen/Qwen3-0.6B',
         'Qwen3-4B': 'Qwen/Qwen3-4B',
         'Qwen3-8B': 'Qwen/Qwen3-8B',
-        'Qwen3-32B': 'Qwen/Qwen3-32B'
+        'Qwen3-32B': 'Qwen/Qwen3-32B',
+        'Qwen3-14B': 'Qwen/Qwen3-14B',
+        'Qwen3-30B-A3B': 'Qwen/Qwen3-30B-A3B'
     }
 
     for model in models:
