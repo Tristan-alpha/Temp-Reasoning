@@ -14,6 +14,8 @@ CUDA_VISIBLE_DEVICES=2,3
 echo "Starting answer generation process for $DATASET dataset"
 
 export CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES
+export HF_HOME="/home/data/dazhou/.cache/huggingface"
+export HF_ENDPOINT="https://hf-mirror.com"
 
 python $SCRIPT_PATH \
     --subset_size $SUBSET_SIZE \
