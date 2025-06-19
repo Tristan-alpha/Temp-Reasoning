@@ -3,16 +3,17 @@
 # Configuration variables
 DATASET="aime"
 temp_group="0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5"
-MODEL_SIZE="7B"  # Default to 7B, can be changed to 34B if needed
-CUDA_VISIBLE_DEVICES=4
+MODEL_SIZE="34B"  # Default to 7B, can be changed to 34B if needed
+CUDA_VISIBLE_DEVICES=1,2
 MODEL=(
     # "WizardMath-7B-V1.1" 
     # "Abel-7B-002"
     # 'Qwen3-0.6B'
     # 'Qwen3-4B'
     # 'Qwen3-8B'
+    'Qwen3-14B'
     # 'Qwen3-32B'
-    Qwen3-30B-A3B
+    # Qwen3-30B-A3B
 )
 
 # Update ReasonEval path based on model size
