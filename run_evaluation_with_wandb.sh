@@ -10,7 +10,7 @@ MODELS=(
     # "WizardMath-7B-V1.1" 
     # "Abel-7B-002"
     # 'Qwen3-0.6B'
-    'Qwen3-4B'
+    # 'Qwen3-4B'
     'Qwen3-8B'
     'Qwen3-14B'
     'Qwen3-32B'
@@ -18,9 +18,9 @@ MODELS=(
 )
 TEMPERATURES=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5)
 SUBSET_SIZE=100  # Use a subset for testing; set to 0 for full dataset
-TENSOR_PARALLEL_SIZE=4  # Number of GPUs to use
+TENSOR_PARALLEL_SIZE=1 # Number of GPUs to use
 GPU_MEMORY_UTILIZATION=0.7
-BATCH_SIZE=4  # Batch size for vLLM inference - increase this to reduce the number of processed prompts
+BATCH_SIZE=1  # Batch size for vLLM inference - increase this to reduce the number of processed prompts
 
 # Paths
 INPUT_PATH="/home/data/dazhou/ReasonEval/dataset"

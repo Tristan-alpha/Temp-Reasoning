@@ -6,3 +6,11 @@
 {"time":"2025-06-29T09:45:37.400244868+08:00","level":"INFO","msg":"sender: started","stream_id":"q48am45n"}
 {"time":"2025-06-29T09:45:37.400188605+08:00","level":"INFO","msg":"handler: started","stream_id":"q48am45n"}
 {"time":"2025-06-29T09:45:37.405609752+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-06-29T11:14:36.005741622+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-06-29T11:14:36.005893487+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-06-29T11:14:36.006629677+08:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-06-29T11:14:36.010585755+08:00","level":"INFO","msg":"stream: closing","id":"q48am45n"}
+{"time":"2025-06-29T11:14:36.01060347+08:00","level":"INFO","msg":"handler: closed","stream_id":"q48am45n"}
+{"time":"2025-06-29T11:14:36.010613785+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":"q48am45n"}
+{"time":"2025-06-29T11:14:36.010626573+08:00","level":"INFO","msg":"sender: closed","stream_id":"q48am45n"}
+{"time":"2025-06-29T11:14:36.010671947+08:00","level":"INFO","msg":"stream: closed","id":"q48am45n"}
