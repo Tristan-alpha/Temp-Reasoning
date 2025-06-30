@@ -138,6 +138,12 @@ def dataset_extraction(item, dataset_name):
         question = item['problem']
         return question, uuid, source
     
+    elif dataset_name.startswith("math-"):
+        source = dataset_name
+        uuid = item.get("unique_id", "unknown")
+        question = item.get("problem", "")
+        return question, uuid, source
+    
     else:
         print("Invalid dataset.")
         return None, None
