@@ -56,7 +56,7 @@ def generate_solutions_batch(model, model_name, questions, temperature, return_l
         )
 
     # Generate for all prompts at once
-    outputs = model.generate(prompts, sampling_params)
+    outputs = model.generate(prompts, sampling_params, use_tqdm=False)
     
     # Process outputs
     results = []
@@ -244,6 +244,11 @@ def main(args):
             # Initialize wandb logger for this model
             if args.logger:
                 args.name = f"{model_name}-{dataset_name}"
+                args.tags = [
+                    f"Model:{model_name}",
+                    f"Dataset:{dataset_name}",
+                    f"ReasonEval:{args.reasoneval_model_size}",
+                ]
                 logger = wandb_logger(args)
             
             # Create model-specific directory

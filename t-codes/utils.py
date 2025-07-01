@@ -10,7 +10,8 @@ class wandb_logger:
                 project=config['project'],
                 name=config['name'],
                 config=config,
-                entity=config['entity'],            
+                entity=config['entity'],
+                tags=config['tags'],            
                 )
         except:
                 wandb.init(
@@ -18,7 +19,8 @@ class wandb_logger:
                 project=config.project,
                 name=config.name,
                 config=config,
-                entity=config.entity,            
+                entity=config.entity,
+                tags=config.tags,            
                 )
 
         self.config = config

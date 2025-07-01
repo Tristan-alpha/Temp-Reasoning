@@ -1,0 +1,16 @@
+{"time":"2025-07-01T07:47:30.085607658+08:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/data/dazhou/ReasonEval/t-codes/wandb/offline-run-20250701_074730-waatbikt/logs/debug-core.log"}
+{"time":"2025-07-01T07:47:30.300477678+08:00","level":"WARN","msg":"GraphQL client is nil, skipping feature loading"}
+{"time":"2025-07-01T07:47:30.300617077+08:00","level":"INFO","msg":"stream: created new stream","id":"waatbikt"}
+{"time":"2025-07-01T07:47:30.30064036+08:00","level":"INFO","msg":"stream: started","id":"waatbikt"}
+{"time":"2025-07-01T07:47:30.300693476+08:00","level":"INFO","msg":"writer: Do: started","stream_id":"waatbikt"}
+{"time":"2025-07-01T07:47:30.300735576+08:00","level":"INFO","msg":"handler: started","stream_id":"waatbikt"}
+{"time":"2025-07-01T07:47:30.300783214+08:00","level":"INFO","msg":"sender: started","stream_id":"waatbikt"}
+{"time":"2025-07-01T07:47:30.303670919+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-01T10:51:30.906045246+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-01T10:51:30.906141102+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-01T10:51:30.906893806+08:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-07-01T10:51:30.908791113+08:00","level":"INFO","msg":"stream: closing","id":"waatbikt"}
+{"time":"2025-07-01T10:51:30.908820275+08:00","level":"INFO","msg":"handler: closed","stream_id":"waatbikt"}
+{"time":"2025-07-01T10:51:30.908835587+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":"waatbikt"}
+{"time":"2025-07-01T10:51:30.908850398+08:00","level":"INFO","msg":"sender: closed","stream_id":"waatbikt"}
+{"time":"2025-07-01T10:51:30.908948318+08:00","level":"INFO","msg":"stream: closed","id":"waatbikt"}

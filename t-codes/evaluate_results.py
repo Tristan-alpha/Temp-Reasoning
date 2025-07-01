@@ -3,8 +3,6 @@ import json
 import sys
 import torch
 import argparse
-import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM
