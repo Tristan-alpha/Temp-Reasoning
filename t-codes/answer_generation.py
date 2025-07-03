@@ -243,7 +243,7 @@ def main(args):
         try:
             # Initialize wandb logger for this model
             if args.logger:
-                args.name = f"{model_name}-{dataset_name}"
+                args.name = f"{model_name}-{dataset_name}-Eval: {args.reasoneval_model_size}"
                 args.tags = [
                     f"Model:{model_name}",
                     f"Dataset:{dataset_name}",
@@ -252,7 +252,7 @@ def main(args):
                 logger = wandb_logger(args)
             
             # Create model-specific directory
-            model_output_dir = os.path.join(output_dir, model_name, dataset_name, "random_probs")
+            model_output_dir = os.path.join(output_dir, model_name, dataset_name, f"random_probs_{args.reasoneval_model_size}")
             os.makedirs(model_output_dir, exist_ok=True)
             
             # Load model with vLLM

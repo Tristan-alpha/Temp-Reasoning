@@ -1,0 +1,8 @@
+{"time":"2025-07-03T05:11:12.048820305+08:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/data/dazhou/ReasonEval/t-codes/wandb/offline-run-20250703_051112-pss5ts3v/logs/debug-core.log"}
+{"time":"2025-07-03T05:11:12.264377963+08:00","level":"WARN","msg":"GraphQL client is nil, skipping feature loading"}
+{"time":"2025-07-03T05:11:12.264540073+08:00","level":"INFO","msg":"stream: created new stream","id":"pss5ts3v"}
+{"time":"2025-07-03T05:11:12.2645732+08:00","level":"INFO","msg":"stream: started","id":"pss5ts3v"}
+{"time":"2025-07-03T05:11:12.264630892+08:00","level":"INFO","msg":"writer: Do: started","stream_id":"pss5ts3v"}
+{"time":"2025-07-03T05:11:12.264676427+08:00","level":"INFO","msg":"handler: started","stream_id":"pss5ts3v"}
+{"time":"2025-07-03T05:11:12.264725277+08:00","level":"INFO","msg":"sender: started","stream_id":"pss5ts3v"}
+{"time":"2025-07-03T05:11:12.268255246+08:00","level":"INFO","msg":"Starting system monitor"}
