@@ -2,10 +2,10 @@
 
 # Example script to run answer generation with real-time evaluation and wandb logging
 
-export CUDA_VISIBLE_DEVICES=1,2,0,3,4 # Specify the GPUs to use
+export CUDA_VISIBLE_DEVICES=1,2,3,4,0 # Specify the GPUs to use
 
 # Set parameters
-DATASET_NAME="math-3"  # or "aime"
+DATASET_NAME="math-5"  # or "aime"
 MODELS=(
     # "WizardMath-7B-V1.1" 
     # "Abel-7B-002"
@@ -23,14 +23,14 @@ MODELS=(
 )
 TEMPERATURES=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5)
 SUBSET_SIZE=100  # Use a subset for testing; set to 0 for full dataset
-TENSOR_PARALLEL_SIZE=2 # Number of GPUs to use
+TENSOR_PARALLEL_SIZE=4 # Number of GPUs to use
 GPU_MEMORY_UTILIZATION=0.65
 BATCH_SIZE=2  # Batch size for vLLM inference - increase this to reduce the number of processed prompts
 
 # Paths
 INPUT_PATH="/home/data/dazhou/ReasonEval/dataset"
 OUTPUT_DIR="/home/data/dazhou/ReasonEval/Results"
-EVAL_MODEL_SIZE=7B
+EVAL_MODEL_SIZE=34B
 REASONEVAL_PATH="GAIR/ReasonEval-$EVAL_MODEL_SIZE"
 SHEPHERD_PATH="peiyi9979/math-shepherd-mistral-7b-prm"
 

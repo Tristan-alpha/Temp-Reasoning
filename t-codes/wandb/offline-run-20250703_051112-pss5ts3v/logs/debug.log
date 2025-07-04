@@ -14,3 +14,9 @@ config: {'input_path': '/home/data/dazhou/ReasonEval/dataset', 'dataset_name': '
 2025-07-03 05:11:12,389 INFO    MainThread:2981930 [wandb_run.py:_redirect():2370] Wrapping output streams.
 2025-07-03 05:11:12,390 INFO    MainThread:2981930 [wandb_run.py:_redirect():2393] Redirects installed.
 2025-07-03 05:11:12,390 INFO    MainThread:2981930 [wandb_init.py:init():1078] run started, returning control to user process
+2025-07-03 10:26:55,015 INFO    MainThread:2981930 [wandb_run.py:_finish():2219] finishing run dazhou_liu2023-southern-university-of-science-technology/Temperature-Reasoning-Evaluation/pss5ts3v
+2025-07-03 10:26:55,015 INFO    MainThread:2981930 [wandb_run.py:_atexit_cleanup():2418] got exitcode: 0
+2025-07-03 10:26:55,015 INFO    MainThread:2981930 [wandb_run.py:_restore():2400] restore
+2025-07-03 10:26:55,015 INFO    MainThread:2981930 [wandb_run.py:_restore():2406] restore done
+2025-07-03 10:26:55,018 INFO    MainThread:2981930 [wandb_run.py:_footer_history_summary_info():4000] rendering history
+2025-07-03 10:26:55,018 INFO    MainThread:2981930 [wandb_run.py:_footer_history_summary_info():4032] rendering summary
