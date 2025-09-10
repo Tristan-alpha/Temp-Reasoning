@@ -13,7 +13,7 @@ Based on the figure, I scaled up the experiment. For example,
 
 At first, I use a simple setting to conduct experiments. The following is the result.
 
-<img width="480" height="295" alt="image" src="https://github.com/user-attachments/assets/5c77747a-3791-4281-84e9-94f7d787a481" />
+<img width="768" height="267" alt="image" src="https://github.com/user-attachments/assets/b738c413-339b-4fcf-8cbf-c0a6f1d52c84" />
 
 <img width="480" height="295" alt="image" src="https://github.com/user-attachments/assets/0b3d3a9d-dd37-45c1-bcf7-cb383050772a" />
 
@@ -27,11 +27,24 @@ From the figure, I find that Deepseek-V3 and GPT-4o-mini significantly outperfor
 
 From the answer we can see that Abel and Wizard models output some unrelated informations, such as dates and meaningless symbols. Even GPT-4o-mini uses some strange symbols to answer the question at a high temperature. Instead, Deepseek V3 performs well and steadily, generating ordered and helpful answers. It also proves the correctness of the evaluators.
 
-TODO: what I find to inspire me to do the following experiments(difficulty  of datasets, flat in  deepseek)
+I found that other 3 models's performances decrease with the increase of temperatures. But Deepseek V3 doesn't. I guess the reason is Deepseek has seen the datasets before and it's very easy for it, considering the difficulties of MATH and GSM8K are merely junior and high school level. To avoid this, I expand the datasets and adopts AIME 22-24, which are mathematical Olympiad (IMO) level. 
 
-After initial experiments, I gain new interests in the following aspects.
+In addition, with the release of Qwen3 series models, I also employed Qwen3 models of different sizes to do the large-scale experiments. In order to make the following experiments clearer and make the content richer, I come up with the following 3 questions.
+
 - Whether the model size influence the result?
 - Whether the dataset's difficulty influence the result?
 - Whether the evaluator size influence the result?
+
+To answer these questions, the experiment is conducted through the following 3 aspects.
+- Same datasets, Same evluators, Different models
+- Same evluators, Same models, Different datasets
+- Same models, Same datasets, Different evluators
+
+During the experiment, I find it hard to manage the result only with python. So I used WandB to restore the experiment's result. The following result uses the labels to clearly present the result according to the above 3 settings.
+
+
+
+
+
 
 With these questions, I continued to do more experiments.
