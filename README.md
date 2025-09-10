@@ -13,11 +13,19 @@ Based on the figure, I scaled up the experiment. For example,
 
 At first, I use a simple setting to conduct experiments. The following is the result.
 
-<img width="960" height="590" alt="image" src="https://github.com/user-attachments/assets/5c77747a-3791-4281-84e9-94f7d787a481" />
+<img width="480" height="295" alt="image" src="https://github.com/user-attachments/assets/5c77747a-3791-4281-84e9-94f7d787a481" />
 
-<img width="960" height="590" alt="image" src="https://github.com/user-attachments/assets/0b3d3a9d-dd37-45c1-bcf7-cb383050772a" />
+<img width="480" height="295" alt="image" src="https://github.com/user-attachments/assets/0b3d3a9d-dd37-45c1-bcf7-cb383050772a" />
 
-Here, hybrid_reasoning is a combined dataset. **TODO** And Validity score, redundancy score, shepherd score are 3 metrics based on reasoning steps. From a simple view, the higher the validity and shepherd scores are, the better the reasoning is. The lower the redundancy score is, the clearer the reasoning is.
+Here, hybrid_reasoning is a combined dataset. I randomly pick 50 questions from each of the MATH level 1-5 and MR-GSM8K datasets, forming totally 300 questions. And Validity score, redundancy score, shepherd score are 3 metrics based on reasoning steps. From a simple view, the higher the validity and shepherd scores are, the better the reasoning is. The lower the redundancy score is, the clearer the reasoning is.
+
+From the figure, I find that Deepseek-V3 and GPT-4o-mini significantly outperform Abel and Wizard, which are based on Llama models. To clarify the reason, I studied some instances of the answers. The followings are the answers for a specific problem.
+
+<img width="1241" height="699" alt="image" src="https://github.com/user-attachments/assets/7c709010-67f7-45e5-a41f-9013eaa4f4cb" />
+
+<img width="1241" height="697" alt="image" src="https://github.com/user-attachments/assets/2c49ed1f-108f-45d8-a9e9-e6c44ac708ae" />
+
+From the answer we can see that Abel and Wizard models output some unrelated informations, such as dates and meaningless symbols. Even GPT-4o-mini uses some strange symbols to answer the question at a high temperature. Instead, Deepseek V3 performs well and steadily, generating ordered and helpful answers. It also proves the correctness of the evaluators.
 
 TODO: what I find to inspire me to do the following experiments(difficulty  of datasets, flat in  deepseek)
 
