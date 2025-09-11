@@ -21,9 +21,9 @@ Here, hybrid_reasoning is a combined dataset. I randomly pick 50 questions from 
 
 From the figure, I find that Deepseek-V3 and GPT-4o-mini significantly outperform Abel and Wizard, which are based on Llama models. To clarify the reason, I studied some instances of the answers. The followings are the answers for a specific problem.
 
-<img width="620" height="349" alt="image" src="https://github.com/user-attachments/assets/7c709010-67f7-45e5-a41f-9013eaa4f4cb" />
+<img width="1240" height="700" alt="image" src="https://github.com/user-attachments/assets/7c709010-67f7-45e5-a41f-9013eaa4f4cb" />
 
-<img width="620" height="349" alt="image" src="https://github.com/user-attachments/assets/2c49ed1f-108f-45d8-a9e9-e6c44ac708ae" />
+<img width="1240" height="700" alt="image" src="https://github.com/user-attachments/assets/2c49ed1f-108f-45d8-a9e9-e6c44ac708ae" />
 
 From the answer we can see that Abel and Wizard models output some unrelated informations, such as dates and meaningless symbols. Even GPT-4o-mini uses some strange symbols to answer the question at a high temperature. Instead, Deepseek V3 performs well and steadily, generating ordered and helpful answers. It also proves the correctness of the evaluators.
 
