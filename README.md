@@ -21,9 +21,9 @@ Here, hybrid_reasoning is a combined dataset. I randomly pick 50 questions from 
 
 From the figure, I find that Deepseek-V3 and GPT-4o-mini significantly outperform Abel and Wizard, which are based on Llama models. To clarify the reason, I studied some instances of the answers. The followings are the answers for a specific problem.
 
-<img width="1241" height="699" alt="image" src="https://github.com/user-attachments/assets/7c709010-67f7-45e5-a41f-9013eaa4f4cb" />
+<img width="620" height="349" alt="image" src="https://github.com/user-attachments/assets/7c709010-67f7-45e5-a41f-9013eaa4f4cb" />
 
-<img width="1241" height="697" alt="image" src="https://github.com/user-attachments/assets/2c49ed1f-108f-45d8-a9e9-e6c44ac708ae" />
+<img width="620" height="349" alt="image" src="https://github.com/user-attachments/assets/2c49ed1f-108f-45d8-a9e9-e6c44ac708ae" />
 
 From the answer we can see that Abel and Wizard models output some unrelated informations, such as dates and meaningless symbols. Even GPT-4o-mini uses some strange symbols to answer the question at a high temperature. Instead, Deepseek V3 performs well and steadily, generating ordered and helpful answers. It also proves the correctness of the evaluators.
 
@@ -38,7 +38,21 @@ To answer these questions, the experiment is conducted through the following 2 a
 - Same datasets, Same evluators, Different models
 - Same evluators, Same models, Different datasets
 
-During the experiment, I find it hard to manage the result only with python. So I used WandB to restore the experiment's result. The following result is a representative, which uses the labels to clearly present the result according to the above 2 settings.
+The setting table is as following. The evaluators are ReasonEval 7B, ReasonEval 34B and MATH-Shepherd. So there should be another dimension but I don't know how to present:)
+
+| Models     | math-1 | math-3 | math-5 | AIME |
+| ---------- | :----: | :----: | :----: | :--: |
+| Qwen3 0.6B |   ✅    |   ✅    |   ✅    |  ✅   |
+| Qwen3 4B   |   ✅    |   ✅    |   ✅    |  ✅   |
+| Qwen3 8B   |   ✅    |   ✅    |   ✅    |  ✅   |
+| Qwen3 14B  |   ✅    |   ✅    |   ✅    |  ✅   |
+
+
+During the experiment, I find it hard to manage the result only with python. So I used WandB to restore the experiment's result. The following is the total result.
+
+<img width="1513" height="807" alt="image" src="https://github.com/user-attachments/assets/e938f93a-0e81-418e-ba9b-c56c7278c8aa" />
+
+The following result is a representative, which uses the labels to clearly present the result according to the above 2 aspects.
 
 <img width="1230" height="302" alt="image" src="https://github.com/user-attachments/assets/1a7ebb1a-5b42-4c3b-9865-8170a7dff69b" />
 
@@ -48,5 +62,19 @@ The dataset is AIME and the ReasonEval size is 7B. The model size varies. From t
 
 The model size is Qwen3 4B and the ReasonEval size is 7B. The difficulty of datasets vary. From the figure we can see that with the increase of difficulty, models perform worse. However, the result didn't support my guess, that the line will decrease harder with the increase of the difficulty. 
 
-**TODO:** top 1 prob, 0.6B lowest, the most uncertain one. Uncertainty
+During the exploration, I found an interesting phonomenon. In each of the datasets, Qwen3 0.6B's token probability drops the fastest! The evidences are listed below. I think this is because it has the least knowledge compared to other models, so it is the most **uncertain** about which token to generate. But there is one thing strange. In AIME, I tried Qwen3 32B, but it is also **unconfident**. The token probability is as low as Qwen3 0.6B. It's an interesting phonomenon remained to explore.
+
+<img width="765" height="280" alt="image" src="https://github.com/user-attachments/assets/8c950cba-baa7-4764-ae47-d9e47c74233b" />
+Dataset: MATH-1
+
+<img width="765" height="280" alt="image" src="https://github.com/user-attachments/assets/1c5a56b9-fb4b-467b-b8dd-930342b0d388" />
+Dataset: MATH-3
+
+<img width="765" height="280" alt="image" src="https://github.com/user-attachments/assets/57726d3e-7296-492c-b5e2-470641454e1e" />
+Dataset: MATH-5
+
+<img width="765" height="280" alt="image" src="https://github.com/user-attachments/assets/65f6c908-786c-48e2-a14e-3cb0af50ab27" />
+Dataset: AIME
+
+
 
