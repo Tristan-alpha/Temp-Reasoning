@@ -44,7 +44,7 @@ To answer these questions, the experiment is conducted through the following 2 a
 - Same datasets, Same evluators, Different models
 - Same evluators, Same models, Different datasets
 
-The setting table is as following. The evaluators are ReasonEval 7B, ReasonEval 34B and MATH-Shepherd. So there should be another dimension but I don't know how to present:)
+The setting table is as following. The evaluators are ReasonEval 7B, ReasonEval 34B and MATH-Shepherd. So there should be another dimension but I don't know how to present. :)
 
 | Models     | math-1 | math-3 | math-5 | AIME |
 | ---------- | :----: | :----: | :----: | :--: |
