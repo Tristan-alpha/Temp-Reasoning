@@ -1,7 +1,9 @@
 Hi! This is the research I have done in Professor Jianguo Zhang's lab.
 
+# Motivation
 The motivation is from this paper, "The Effect of Sampling Temperature on Problem Solving in Large Language Models". It claims that temperature doesn't influence model's performance when the temperature changes from 0.0 to 1.0. It actually violates my intuition. With the increase of temperature, I think the performance will continually decrease, considering the problem is a reasoning task and it doesn't require creativity. After closer inspection, I noticed that the work is based on MCQA (Multiple-Choice Question-and-Answer) problems and it mainly focuses on final accuracy. This gives me some inspirations: will it be different if I go deeper into the **reasoning steps**? 
 
+# Pipeline
 To find a good way to measure the reasoning steps' quality, I made a wide range of literature research and found some fine-tuned models that can score the steps based on validity and redundancy. With the help of these models (will be introduced in detail later), I build up the whole pipeline independently.
 
 - First, I ask models in different temperatures to generate answers for problems in datasets. 
@@ -13,6 +15,7 @@ The figure above is the initial plan. Then, I scaled up the experiment. For exam
 - Datasets: I adopted several datasets such as AIME 22-24, MATH and MR-GSM8K.
 - Models: I used Abel, Wizard and Qwen3 0.6B, 4B, 8B, 14B models to do large-scale experiment. And calling APIs of Deepseek-V3 (0324), OpenAI models(GPT-4o-mini) in a smaller scale.
 
+# Initial Attempt
 At first, I use a simple setting to conduct experiments. The following is the result.
 
 <img width="768" height="267" alt="image" src="https://github.com/user-attachments/assets/b738c413-339b-4fcf-8cbf-c0a6f1d52c84" />
@@ -29,6 +32,7 @@ From the figure, I find that Deepseek-V3 and GPT-4o-mini significantly outperfor
 
 From the answer we can see that Abel and Wizard models output some unrelated informations, such as dates and meaningless symbols. Even GPT-4o-mini uses some strange symbols to answer the question at a high temperature. Instead, Deepseek V3 performs well and steadily, generating ordered and helpful answers. It also proves the correctness of the evaluators.
 
+# Further Experiments
 I found that other 3 models's performances decrease with the increase of temperatures. But Deepseek V3 doesn't. I guess the reason is Deepseek has seen the datasets before and it's very easy for it, considering the difficulties of MATH and GSM8K are merely junior and high school level. To avoid this, I expand the datasets and adopts AIME 22-24, which are mathematical Olympiad (IMO) level. 
 
 In addition, with the release of Qwen3 series models, I also employed Qwen3 models of different sizes to do the large-scale experiments. In order to make the following experiments clearer and make the content richer, I come up with the following 2 questions.
@@ -78,5 +82,5 @@ Dataset: MATH-5
 <img width="765" height="280" alt="image" src="https://github.com/user-attachments/assets/65f6c908-786c-48e2-a14e-3cb0af50ab27" />
 Dataset: AIME
 
-Conclusion: 
+# Conclusion
 In general, the experiments' result support the conclusion of the paper "The Effect of Sampling Temperature on Problem Solving in Large Language Models", that temperature doesn't influence model's performance when the temperature changes from 0.0 to 1.0. In the process, I also found that there are some uncertainties using LLM to judge the reasoning steps. It's not easy to judge the quality of the output of LLM, not to mention using LLM to evaluate the output of other LLMs. The evaluators provide some disturbances, making some of the results hard to analysis. After all, it's a precious opportunity for me to study about LLM and I gained valuable engineering experiences in it.
