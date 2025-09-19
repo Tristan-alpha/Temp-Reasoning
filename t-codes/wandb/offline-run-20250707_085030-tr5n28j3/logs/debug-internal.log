@@ -1,0 +1,16 @@
+{"time":"2025-07-07T08:50:30.058193748+08:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/data/dazhou/ReasonEval/t-codes/wandb/offline-run-20250707_085030-tr5n28j3/logs/debug-core.log"}
+{"time":"2025-07-07T08:50:30.1673871+08:00","level":"WARN","msg":"GraphQL client is nil, skipping feature loading"}
+{"time":"2025-07-07T08:50:30.167486251+08:00","level":"INFO","msg":"stream: created new stream","id":"tr5n28j3"}
+{"time":"2025-07-07T08:50:30.167514291+08:00","level":"INFO","msg":"stream: started","id":"tr5n28j3"}
+{"time":"2025-07-07T08:50:30.167549832+08:00","level":"INFO","msg":"writer: Do: started","stream_id":"tr5n28j3"}
+{"time":"2025-07-07T08:50:30.167621464+08:00","level":"INFO","msg":"sender: started","stream_id":"tr5n28j3"}
+{"time":"2025-07-07T08:50:30.167564953+08:00","level":"INFO","msg":"handler: started","stream_id":"tr5n28j3"}
+{"time":"2025-07-07T08:50:30.170742164+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-07T12:03:42.859893919+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-07T12:03:42.859955427+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-07T12:03:42.86039269+08:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-07-07T12:03:42.862022202+08:00","level":"INFO","msg":"stream: closing","id":"tr5n28j3"}
+{"time":"2025-07-07T12:03:42.86203509+08:00","level":"INFO","msg":"handler: closed","stream_id":"tr5n28j3"}
+{"time":"2025-07-07T12:03:42.862042441+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":"tr5n28j3"}
+{"time":"2025-07-07T12:03:42.862060286+08:00","level":"INFO","msg":"sender: closed","stream_id":"tr5n28j3"}
+{"time":"2025-07-07T12:03:42.862108975+08:00","level":"INFO","msg":"stream: closed","id":"tr5n28j3"}

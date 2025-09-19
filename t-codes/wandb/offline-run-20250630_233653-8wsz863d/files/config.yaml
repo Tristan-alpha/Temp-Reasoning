@@ -1,0 +1,121 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    python_version: 3.10.13
+    cli_version: 0.20.1
+    framework: huggingface
+    huggingface_version: 4.51.3
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1751297814
+    t:
+      1:
+      - 1
+      - 5
+      - 11
+      - 30
+      - 41
+      - 49
+      - 51
+      - 53
+      - 71
+      - 95
+      3:
+      - 4
+      - 13
+      - 15
+      - 16
+      - 42
+      - 55
+      4: 3.10.13
+      5: 0.20.1
+      6: 4.51.3
+      13: linux-x86_64
+input_path:
+  desc: null
+  value: /home/data/dazhou/ReasonEval/dataset
+dataset_name:
+  desc: null
+  value: math-1
+output_dir:
+  desc: null
+  value: /home/data/dazhou/ReasonEval/Results
+models:
+  desc: null
+  value:
+  - Qwen3-14B
+  - Qwen3-0.6B
+  - Qwen3-4B
+  - Qwen3-8B
+  - Qwen3-30B-A3B
+temperatures:
+  desc: null
+  value:
+  - 0.1
+  - 0.2
+  - 0.3
+  - 0.4
+  - 0.5
+  - 0.6
+  - 0.7
+  - 0.8
+  - 0.9
+  - 1.0
+  - 1.1
+  - 1.2
+  - 1.3
+  - 1.4
+  - 1.5
+subset_size:
+  desc: null
+  value: 100
+batch_size:
+  desc: null
+  value: 2
+tensor_parallel_size:
+  desc: null
+  value: 4
+gpu_memory_utilization:
+  desc: null
+  value: 0.65
+vllm_dtype:
+  desc: null
+  value: half
+max_model_len:
+  desc: null
+  value: 6000
+logger:
+  desc: null
+  value: true
+entity:
+  desc: null
+  value: dazhou_liu2023-southern-university-of-science-technology
+project:
+  desc: null
+  value: Temperature-Reasoning-Evaluation
+name:
+  desc: null
+  value: Qwen3-14B-math-1
+enable_evaluation:
+  desc: null
+  value: true
+reasoneval_path:
+  desc: null
+  value: GAIR/ReasonEval-34B
+reasoneval_model_size:
+  desc: null
+  value: 34B
+shepherd_path:
+  desc: null
+  value: peiyi9979/math-shepherd-mistral-7b-prm
+log_token_probs:
+  desc: null
+  value: true
+tags:
+  desc: null
+  value:
+  - Model:Qwen3-14B
+  - Dataset:math-1
+  - ReasonEval:34B

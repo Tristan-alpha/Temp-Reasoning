@@ -1,0 +1,70 @@
+Using vLLM for optimized inference with 4 GPUs
+WARNING 06-30 23:36:55 [config.py:2972] Casting torch.bfloat16 to torch.float16.
+INFO 06-30 23:37:02 [config.py:717] This model supports multiple tasks: {'generate', 'classify', 'score', 'embed', 'reward'}. Defaulting to 'generate'.
+INFO 06-30 23:37:02 [config.py:1770] Defaulting to use mp for distributed inference
+INFO 06-30 23:37:02 [config.py:2003] Chunked prefill is enabled with max_num_batched_tokens=8192.
+WARNING 06-30 23:37:04 [utils.py:2382] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/getting_started/troubleshooting.html#python-multiprocessing for more information. Reason: CUDA is initialized
+INFO 06-30 23:39:19 [core_client.py:439] Core engine process 0 ready.
+Successfully loaded model from Qwen/Qwen3-14B
+Processing with temperature: 0.1
+Temperature 0.1 - Avg Validity: 0.4515, Avg Redundancy: 0.3340, Avg Shepherd: 0.5268
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_0.1.json
+Processing with temperature: 0.2
+Temperature 0.2 - Avg Validity: 0.4321, Avg Redundancy: 0.3379, Avg Shepherd: 0.5096
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_0.2.json
+Processing with temperature: 0.3
+Temperature 0.3 - Avg Validity: 0.4428, Avg Redundancy: 0.3429, Avg Shepherd: 0.5455
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_0.3.json
+Processing with temperature: 0.4
+Temperature 0.4 - Avg Validity: 0.4268, Avg Redundancy: 0.3534, Avg Shepherd: 0.4959
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_0.4.json
+Processing with temperature: 0.5
+Temperature 0.5 - Avg Validity: 0.4123, Avg Redundancy: 0.3504, Avg Shepherd: 0.4994
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_0.5.json
+Processing with temperature: 0.6
+Temperature 0.6 - Avg Validity: 0.4347, Avg Redundancy: 0.3596, Avg Shepherd: 0.4711
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_0.6.json
+Processing with temperature: 0.7
+Temperature 0.7 - Avg Validity: 0.4205, Avg Redundancy: 0.3609, Avg Shepherd: 0.4783
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_0.7.json
+Processing with temperature: 0.8
+Temperature 0.8 - Avg Validity: 0.4031, Avg Redundancy: 0.3496, Avg Shepherd: 0.4769
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_0.8.json
+Processing with temperature: 0.9
+Temperature 0.9 - Avg Validity: 0.4238, Avg Redundancy: 0.3666, Avg Shepherd: 0.5301
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_0.9.json
+Processing with temperature: 1.0
+Temperature 1.0 - Avg Validity: 0.4015, Avg Redundancy: 0.3635, Avg Shepherd: 0.4521
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_1.0.json
+Processing with temperature: 1.1
+Temperature 1.1 - Avg Validity: 0.3956, Avg Redundancy: 0.3725, Avg Shepherd: 0.5113
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_1.1.json
+Processing with temperature: 1.2
+Temperature 1.2 - Avg Validity: 0.3822, Avg Redundancy: 0.4044, Avg Shepherd: 0.4803
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_1.2.json
+Processing with temperature: 1.3
+Temperature 1.3 - Avg Validity: 0.3502, Avg Redundancy: 0.4156, Avg Shepherd: 0.4511
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_1.3.json
+Processing with temperature: 1.4
+Temperature 1.4 - Avg Validity: 0.2901, Avg Redundancy: 0.4163, Avg Shepherd: 0.3375
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_1.4.json
+Processing with temperature: 1.5
+Temperature 1.5 - Avg Validity: 0.2800, Avg Redundancy: 0.4169, Avg Shepherd: 0.3198
+Results saved to /home/data/dazhou/ReasonEval/Results/Qwen3-14B/math-1/random_probs/temperature_1.5.json
+Processing batches:  60%|████████████████████████████████████████████████████████████████▏                                          | 30/50 [14:03<09:23, 28.17s/it]Token indices sequence length is longer than the specified maximum sequence length for this model (5377 > 4096). Running this sequence through the model will result in indexing errors
+Processing batches: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [23:36<00:00, 28.34s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████| 50/50 [23:21<00:00, 28.03s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [23:22<00:00, 28.05s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [23:27<00:00, 28.14s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [23:11<00:00, 27.84s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [23:46<00:00, 28.53s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [23:05<00:00, 27.71s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [23:21<00:00, 28.04s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [22:55<00:00, 27.50s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [23:09<00:00, 27.80s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [22:44<00:00, 27.29s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [23:04<00:00, 27.69s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [22:02<00:00, 26.46s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [22:35<00:00, 27.11s/it]
+Processing batches: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [22:32<00:00, 27.05s/it]
+[34m[1mwandb[39m[22m: [33mWARNING[39m The `quiet` argument to `wandb.run.finish()` is deprecated, use `wandb.Settings(quiet=...)` to set this instead.

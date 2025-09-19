@@ -1,0 +1,1 @@
+{"avg_validity": 0.2800469970703125, "avg_redundancy": 0.416861572265625, "avg_top5_prob": 0.7660678957771724, "_timestamp": 1751318738.7699144, "_runtime": 20924.742261138, "avg_shepherd": 0.3197967529296875, "num_samples": 100, "avg_top1_prob": 0.6519097550861094, "temperature": 1.5, "_step": 15}
