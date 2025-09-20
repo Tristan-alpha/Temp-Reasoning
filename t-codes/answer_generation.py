@@ -192,8 +192,9 @@ def main(args):
         'Qwen3-8B': 'Qwen/Qwen3-8B',
         'Qwen3-32B': 'Qwen/Qwen3-32B',
         'Qwen3-14B': 'Qwen/Qwen3-14B',
-        'Qwen3-30B-A3B': 'Qwen/Qwen3-30B-A3B'
-    }
+        'Qwen3-30B-A3B': 'Qwen/Qwen3-30B-A3B',
+        'Tongyi-DeepResearch-30B-A3B': 'Alibaba-NLP/Tongyi-DeepResearch-30B-A3B'
+        }
 
     # Validate and filter models
     models = [model for model in models if model in model_paths]
