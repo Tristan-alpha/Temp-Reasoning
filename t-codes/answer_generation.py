@@ -29,16 +29,16 @@ def generate_solutions_batch(model, model_name, questions, temperature, return_l
     prompts = []
     for question in questions:
         if model_name == "Abel-7B-002" or model_name == "WizardMath-7B-V1.1":
-            prompt = f"Question: {question}\n\nProvide a step-by-step solution:"
+            prompt = f"Question: {question}\n\nProvide a step-by-step solution, and put your final answer within \\boxed{{}}."
         else:
-            prompt = f"Solve math problems step-by-step. You MUST end each COMPLETE step with a double newline (\\n\\n). Question: {question}"
+            prompt = f"Solve math problems step-by-step. You MUST end each COMPLETE step with a double newline (\\n\\n). Please reason step by step, and put your final answer within \\boxed{{}}. Question: {question}"
         prompts.append(prompt)
     
     # vLLM batch generation
     if temperature == 0:
         sampling_params = SamplingParams(
             temperature=0.0,
-            max_tokens=2048,
+            max_tokens=38912,
             # use_beam_search=False,
             top_p=1.0,
             top_k=-1,
@@ -48,7 +48,7 @@ def generate_solutions_batch(model, model_name, questions, temperature, return_l
     else:
         sampling_params = SamplingParams(
             temperature=temperature,
-            max_tokens=2048,
+            max_tokens=38912,
             top_p=1.0,
             top_k=-1,
             skip_special_tokens=True,
