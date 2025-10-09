@@ -10,7 +10,9 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_dataset
 from vllm import LLM, SamplingParams
+
 from utils import wandb_logger
+from math_equivalence import is_equiv
 
 # Add ReasonEval path
 reasoneval_path = "/home/data/dazhou/ReasonEval/t-codes"
@@ -31,7 +33,11 @@ def generate_solutions_batch(model, model_name, questions, temperature, return_l
         if model_name == "Abel-7B-002" or model_name == "WizardMath-7B-V1.1":
             prompt = f"Question: {question}\n\nProvide a step-by-step solution, and put your final answer within \\boxed{{}}."
         else:
-            prompt = f"Solve math problems step-by-step. You MUST end each COMPLETE step with a double newline (\\n\\n). Please reason step by step, and put your final answer within \\boxed{{}}. Question: {question}"
+            prompt = (
+                "Solve math problems step-by-step. You MUST end each COMPLETE step with a double newline (\\n\\n). "
+                "Please reason step by step, and put your final answer within \\boxed{}.\n\n"
+                f"Question: {question}"
+            )
         prompts.append(prompt)
     
     # vLLM batch generation
@@ -107,16 +113,16 @@ def format_solution_steps(solution, model_name):
                     steps.append(f"Step {step_num}: {line}")
                     step_num += 1
     else:
+        # Check if we have reasonable step divisions from triple newlines
         paragraphs = [p.strip() for p in re.split(r'\n\s*\n|\\n\s*\\n', solution) if p.strip()]
-        # If we have reasonable step divisions from triple newlines, use them
-        if paragraphs and len(paragraphs) > 1:
-            for i, paragraph in enumerate(paragraphs):
-                steps.append(f"Step {i+1}: {paragraph}")
-        else:
-            # Last resort: If no step structure is detected, use double newlines as fallback
+        # Last resort: If no step structure is detected, use single newline as fallback
+        if len(paragraphs) <= 1:
             paragraphs = [p.strip() for p in solution.split('\n') if p.strip()]
-            for i, paragraph in enumerate(paragraphs):
-                steps.append(f"Step {i+1}: {paragraph}")
+        for i, paragraph in enumerate(paragraphs):
+            steps.append(f"Step {i+1}: {paragraph}")
+            # Truncate after the first \boxed{}, which marks the model’s final answer
+            if "\\boxed{" in paragraph:
+                break
     
     return steps
 
@@ -127,26 +133,30 @@ def dataset_extraction(item, dataset_name):
         if source == "math":
             uuid = item.get("unique_id", "unknown")
             question = item.get("problem", "")
+            answer = item.get("answer", "")
         elif source == "mr-gsm8k":
             uuid = item.get("uuid", "unknown")
             question = item.get("question", "")
-        return question, uuid, source
+            answer = item.get("ground_truth_answer", "")
+        return question, uuid, source, answer
     
     elif dataset_name == "aime":
         source = dataset_name
-        uuid = str(item['id'])
-        question = item['problem']
-        return question, uuid, source
+        uuid = item.get("ID", "unknown")
+        question = item.get("Question", "")
+        answer = item.get("Answer", "")
+        return question, uuid, source, answer
     
     elif dataset_name.startswith("math-"):
         source = dataset_name
         uuid = item.get("unique_id", "unknown")
         question = item.get("problem", "")
-        return question, uuid, source
+        answer = item.get("answer", "")
+        return question, uuid, source, answer
     
     else:
         print("Invalid dataset.")
-        return None, None
+        return None, None, None, None
 
 def load_json_data(file_path):
     dataset = []
@@ -160,6 +170,22 @@ def load_json_data(file_path):
                     print(f"Warning: Could not parse line as JSON: {line[:50]}...")
     return dataset
 
+def extract_boxed(text: str):
+    start = text.find(r'\boxed{', i)
+    if start == -1:
+        return None
+    i = start + len(r'\boxed{')
+    brace_count = 1
+    content_start = i
+    while i < len(text) and brace_count > 0:
+        if text[i] == '{':
+            brace_count += 1
+        elif text[i] == '}':
+            brace_count -= 1
+        i += 1
+    if brace_count == 0:
+        return text[content_start:i-1]
+    return None
 
 def main(args):
     # Clear CUDA cache at the start to ensure clean environment
@@ -176,7 +202,7 @@ def main(args):
 
     # Load the dataset
     if dataset_name == "aime":
-        raw_dataset = load_dataset("AI-MO/aimo-validation-aime", split="train")
+        raw_dataset = load_dataset("di-zhang-fdu/AIME_1983_2024", split="train")
         dataset = [raw_dataset[i] for i in range(len(raw_dataset))]
     else:
         dataset_path = os.path.join(input_path, f"{dataset_name}.json")
@@ -278,6 +304,7 @@ def main(args):
                 temp_shepherd_scores = []
                 temp_avg_top1_probs = []
                 temp_avg_top5_probs = []
+                temp_accuracy_scores = []
 
                 # Process in batches
                 for i in tqdm(range(0, len(dataset), args.batch_size), desc="Processing batches"):
@@ -291,9 +318,9 @@ def main(args):
                         # print(f"Item content: {item}")
                         # print(f"Dataset type: {type(dataset)}")
                         # print(f"Batch_items type: {type(batch_items)}")
-                        question, uuid, source = dataset_extraction(item, dataset_name)
+                        question, uuid, source, answer = dataset_extraction(item, dataset_name)
                         batch_questions.append(question)
-                        batch_metadata.append((uuid, source))
+                        batch_metadata.append((uuid, source, answer))
                     
                     try:
                         # Generate solutions for the batch
@@ -308,7 +335,7 @@ def main(args):
                         
                         # Process each result in the batch
                         for j, batch_result in enumerate(batch_results):
-                            uuid, source = batch_metadata[j]
+                            uuid, source, answer = batch_metadata[j]
                             question = batch_questions[j]
                             
                             if args.enable_evaluation and args.log_token_probs:
@@ -317,17 +344,31 @@ def main(args):
                                 solution_steps = batch_result
                                 logprobs_info = None
                             
+                            if solution_steps:
+                                final_step = solution_steps[-1]
+                                model_answer = extract_boxed(final_step)
+                            else:
+                                model_answer = None
+                            
+                            is_correct = is_equiv(answer, model_answer)
+                            
                             # Create result object
                             result = {
                                 "uuid": uuid,
-                                "question": question,
                                 "source": source,
-                                "model_output_steps": solution_steps
+                                "question": question,
+                                "answer": answer,
+                                "model_answer": model_answer,
+                                "is_correct": is_correct,
+                                "model_output_steps": solution_steps,
                             }
                             
                             # Evaluate solution if evaluation models are loaded
                             if args.enable_evaluation and reasoneval_model and shepherd_model:
                                 try:
+                                    # Accuracy
+                                    temp_accuracy_scores.append(is_correct)
+                                    
                                     # ReasonEval evaluation
                                     _, _, solution_validity, solution_redundancy = evaluate_solution_with_reasoneval(
                                         reasoneval_model, reasoneval_tokenizer, question, solution_steps
@@ -383,6 +424,7 @@ def main(args):
                 # Log aggregated metrics for this temperature
                 if logger and temp_validity_scores:
                     agg_metrics = {
+                        "accuracy": np.mean(temp_accuracy_scores),
                         "avg_validity": np.mean(temp_validity_scores),
                         "avg_redundancy": np.mean(temp_redundancy_scores),
                         "avg_shepherd": np.mean(temp_shepherd_scores),
