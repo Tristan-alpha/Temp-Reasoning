@@ -438,9 +438,11 @@ def main(args):
                     # Log with temperature as x-axis
                     logger.log_temperature_metrics(agg_metrics, temp)
                     
-                    print(f"Temperature {temp} - Avg Validity: {np.mean(temp_validity_scores):.4f}, "
-                          f"Avg Redundancy: {np.mean(temp_redundancy_scores):.4f}, "
-                          f"Avg Shepherd: {np.mean(temp_shepherd_scores):.4f}")
+                    print(f"Temperature {temp} - "
+                          f"Accuracy: {agg_metrics["accuracy"]:.4f}, "
+                          f"Avg Validity: {agg_metrics["avg_validity"]:.4f}, "
+                          f"Avg Redundancy: {agg_metrics["avg_redundancy"]:.4f}, "
+                          f"Avg Shepherd: {agg_metrics["avg_shepherd"]:.4f}")
                 
                 # Save results to file
                 output_path = os.path.join(model_output_dir, f"temperature_{temp}.json")
