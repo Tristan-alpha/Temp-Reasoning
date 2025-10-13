@@ -171,7 +171,7 @@ def load_json_data(file_path):
     return dataset
 
 def extract_boxed(text: str):
-    start = text.find(r'\boxed{', i)
+    start = text.find(r'\boxed{')
     if start == -1:
         return None
     i = start + len(r'\boxed{')
