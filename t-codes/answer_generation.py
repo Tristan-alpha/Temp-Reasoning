@@ -170,7 +170,7 @@ def load_json_data(file_path):
                     print(f"Warning: Could not parse line as JSON: {line[:50]}...")
     return dataset
 
-def extract_boxed(text: str):
+def extract_boxed_position(text: str):
     start = text.find(r'\boxed{')
     if start == -1:
         return None
@@ -184,13 +184,13 @@ def extract_boxed(text: str):
             brace_count -= 1
         i += 1
     if brace_count == 0:
-        return text[content_start:i-1]
+        return content_start, i - 1
     return None
 
 def main(args):
     # Clear CUDA cache at the start to ensure clean environment
     torch.cuda.empty_cache()
-    
+
     input_path = args.input_path
     output_dir = args.output_dir
     dataset_name = args.dataset_name
@@ -209,7 +209,7 @@ def main(args):
         dataset = load_json_data(dataset_path)
 
     os.makedirs(output_dir, exist_ok=True)
-    
+
     model_paths = {
         'Abel-7B-002': 'GAIR/Abel-7B-002',
         'WizardMath-7B-V1.1': 'WizardLMTeam/WizardMath-7B-V1.1',
@@ -227,7 +227,7 @@ def main(args):
     if not models:
         print("Error: No valid models specified. Exiting.")
         return
-   
+
     models = {model: model_paths[model] for model in models}
 
     if args.subset_size > 0 and args.subset_size < len(dataset):
@@ -241,15 +241,15 @@ def main(args):
     # Process each model
     for model_name, model_path in models.items():
         print(f"Loading model: {model_name} from {model_path}")
-        
+
         model = None  # Initialize model variable
-        
+
         try:
 
             # Create model-specific directory
             model_output_dir = os.path.join(output_dir, model_name, dataset_name, f"random_probs_{args.reasoneval_model_size}")
             os.makedirs(model_output_dir, exist_ok=True)
-            
+
             # Load model with vLLM
             print(f"Using vLLM for optimized inference with {args.tensor_parallel_size} GPUs")
             model = load_model_with_vllm(
@@ -264,17 +264,17 @@ def main(args):
 
             for temp in temperatures:
                 print(f"Processing with temperature: {temp}")
-                
+
                 counter = 0
                 results = []
 
                 # Process in batches
                 for i in tqdm(range(0, len(dataset), args.batch_size), desc="Processing batches"):
                     batch_items = dataset[i:i + args.batch_size]
-            
+
                     batch_questions = []
                     batch_metadata = []
-                    
+
                     for item in batch_items:
                         # print(f"Item type: {type(item)}")
                         # print(f"Item content: {item}")
@@ -283,7 +283,7 @@ def main(args):
                         question, uuid, source, answer = dataset_extraction(item, dataset_name)
                         batch_questions.append(question)
                         batch_metadata.append((uuid, source, answer))
-                    
+
                     try:
                         # Generate solutions for the batch
                         if args.enable_evaluation and args.log_token_probs:
@@ -294,26 +294,33 @@ def main(args):
                             batch_results = generate_solutions_batch(
                                 model, model_name, batch_questions, temp, return_logprobs=False
                             )
-                        
+
                         # Process each result in the batch
                         for j, batch_result in enumerate(batch_results):
                             uuid, source, answer = batch_metadata[j]
                             question = batch_questions[j]
-                            
+
                             if args.enable_evaluation and args.log_token_probs:
                                 solution_steps, logprobs_info = batch_result
                             else:
                                 solution_steps = batch_result
                                 logprobs_info = None
-                            
+
                             if solution_steps:
                                 final_step = solution_steps[-1]
-                                model_answer = extract_boxed(final_step)
+                                boxed_pos = extract_boxed_position(final_step)
+                                if boxed_pos:
+                                    model_answer = final_step[boxed_pos[0] : boxed_pos[1]]
+                                    lf_pos = final_step.find("\n", boxed_pos[1])
+                                    if lf_pos != -1:
+                                        solution_steps[-1] = final_step[:lf_pos]
+                                else:
+                                    model_answer = None
                             else:
                                 model_answer = None
-                            
+
                             is_correct = is_equiv(answer, model_answer)
-                            
+
                             # Create result object
                             result = {
                                 "uuid": uuid,
@@ -324,10 +331,10 @@ def main(args):
                                 "is_correct": is_correct,
                                 "model_output_steps": solution_steps,
                             }
-                            
+
                             results.append(result)
                             counter += 1
-                            
+
                     except Exception as e:
                         print(f"Error processing batch starting at index {i}: {str(e)}")
 
@@ -368,7 +375,7 @@ def main(args):
         evaluation_model_loaded = False
         try:
             reasoneval_model, reasoneval_tokenizer = load_reasoneval_model(args.reasoneval_path, args.reasoneval_model_size)
-            
+
             print("Loading Math-Shepherd model...")
             shepherd_tokenizer = AutoTokenizer.from_pretrained(args.shepherd_path)
             shepherd_model = AutoModelForCausalLM.from_pretrained(
@@ -413,33 +420,33 @@ def main(args):
                                 try:
                                     # Accuracy
                                     temp_accuracy_scores.append(result["is_correct"])
-                                    
+
                                     # ReasonEval evaluation
                                     _, _, solution_validity, solution_redundancy = evaluate_solution_with_reasoneval(
                                         reasoneval_model, reasoneval_tokenizer, result["question"], result["model_output_steps"]
                                     )
-                                    
+
                                     # Math-Shepherd evaluation
                                     _, solution_shepherd_score = evaluate_solution_with_math_shepherd(
                                         shepherd_model, shepherd_tokenizer, result["question"], result["model_output_steps"]
                                     )
-                                    
+
                                     # Add evaluation scores to result
                                     result["validity_score"] = solution_validity
                                     result["redundancy_score"] = solution_redundancy
                                     result["shepherd_score"] = solution_shepherd_score
-                                    
+
                                     # Collect scores for aggregation
                                     temp_validity_scores.append(solution_validity)
                                     temp_redundancy_scores.append(solution_redundancy)
                                     temp_shepherd_scores.append(solution_shepherd_score)
-                                    
+
                                     # Add token probability metrics if available
                                     if args.log_token_probs and logprobs_info:
                                         # Calculate average top-1 and top-5 probabilities
                                         top1_probs = []
                                         top5_probs = []
-                                        
+
                                         for token_probs in logprobs_info:
                                             if token_probs:
                                                 sorted_probs = sorted(token_probs.values(), 
@@ -471,14 +478,14 @@ def main(args):
                                 "avg_shepherd": np.mean(temp_shepherd_scores),
                                 "num_samples": len(temp_validity_scores)
                             }
-                            
+
                             if temp_avg_top1_probs:
                                 agg_metrics["avg_top1_prob"] = np.mean(temp_avg_top1_probs)
                                 agg_metrics["avg_top5_prob"] = np.mean(temp_avg_top5_probs)
-                            
+
                             # Log with temperature as x-axis
                             logger.log_temperature_metrics(agg_metrics, temp)
-                            
+
                             print(f"Temperature {temp} - "
                                 f"Accuracy: {agg_metrics['accuracy']:.4f}, "
                                 f"Avg Validity: {agg_metrics['avg_validity']:.4f}, "
