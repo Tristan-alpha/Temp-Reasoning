@@ -174,9 +174,9 @@ def extract_boxed(text: str):
     start = text.find(r'\boxed{')
     if start == -1:
         return None
-    i = start + len(r'\boxed{')
+    content_start = start + len(r'\boxed{')
     brace_count = 1
-    content_start = i
+    i = content_start
     while i < len(text) and brace_count > 0:
         if text[i] == '{':
             brace_count += 1
@@ -235,49 +235,17 @@ def main(args):
 
         random.seed(42)
         dataset = random.sample(dataset, args.subset_size)
-    
-    # Load evaluation models if needed
-    reasoneval_model = None
-    reasoneval_tokenizer = None
-    shepherd_model = None
-    shepherd_tokenizer = None
-    
-    if args.enable_evaluation:
-        print("Loading evaluation models...")
-        try:
-            reasoneval_model, reasoneval_tokenizer = load_reasoneval_model(args.reasoneval_path, args.reasoneval_model_size)
-            
-            print("Loading Math-Shepherd model...")
-            shepherd_tokenizer = AutoTokenizer.from_pretrained(args.shepherd_path)
-            shepherd_model = AutoModelForCausalLM.from_pretrained(
-                args.shepherd_path,
-                torch_dtype=torch.float16,
-                device_map="auto"
-            )
-            shepherd_model.eval()
-        except Exception as e:
-            print(f"Warning: Failed to load evaluation models: {e}")
-            print("Continuing without evaluation...")
-            args.enable_evaluation = False
+
+    results_by_model = {}
 
     # Process each model
     for model_name, model_path in models.items():
         print(f"Loading model: {model_name} from {model_path}")
         
         model = None  # Initialize model variable
-        logger = None  # Initialize logger variable
         
         try:
-            # Initialize wandb logger for this model
-            if args.logger:
-                args.name = f"{model_name}-{dataset_name}-Eval: {args.reasoneval_model_size}"
-                args.tags = [
-                    f"Model:{model_name}",
-                    f"Dataset:{dataset_name}",
-                    f"ReasonEval:{args.reasoneval_model_size}",
-                ]
-                logger = wandb_logger(args)
-            
+
             # Create model-specific directory
             model_output_dir = os.path.join(output_dir, model_name, dataset_name, f"random_probs_{args.reasoneval_model_size}")
             os.makedirs(model_output_dir, exist_ok=True)
@@ -292,19 +260,13 @@ def main(args):
                 max_model_len=args.max_model_len
             )
 
+            results_by_temperature = {}
+
             for temp in temperatures:
                 print(f"Processing with temperature: {temp}")
                 
                 counter = 0
                 results = []
-                
-                # Metrics for aggregation
-                temp_validity_scores = []
-                temp_redundancy_scores = []
-                temp_shepherd_scores = []
-                temp_avg_top1_probs = []
-                temp_avg_top5_probs = []
-                temp_accuracy_scores = []
 
                 # Process in batches
                 for i in tqdm(range(0, len(dataset), args.batch_size), desc="Processing batches"):
@@ -363,20 +325,103 @@ def main(args):
                                 "model_output_steps": solution_steps,
                             }
                             
+                            results.append(result)
+                            counter += 1
+                            
+                    except Exception as e:
+                        print(f"Error processing batch starting at index {i}: {str(e)}")
+
+                # Save results for evaluation
+                results_by_temperature[temp] = results
+
+                # Save results to file
+                output_path = os.path.join(model_output_dir, f"temperature_{temp}.json")
+                with open(output_path, 'w') as f:
+                    json.dump(results, f, indent=2)
+                print(f"Results saved to {output_path}")
+
+            results_by_model[model_name] = results_by_temperature
+        except Exception as e:
+            print(f"Error processing model {model_name}: {str(e)}")
+            print("Continuing to next model...")
+        finally:
+            if model is not None:
+                try:
+                    del model
+                    # Force garbage collection
+                    import gc
+                    gc.collect()
+                    torch.cuda.empty_cache()
+                except Exception as cleanup_error:
+                    print(f"Warning: Error during model cleanup for {model_name}: {cleanup_error}")
+
+    # Load evaluation models if needed
+    reasoneval_model = None
+    reasoneval_tokenizer = None
+    shepherd_model = None
+    shepherd_tokenizer = None
+
+    if args.enable_evaluation:
+        print("Loading evaluation models...")
+
+        # Load evaluation models
+        evaluation_model_loaded = False
+        try:
+            reasoneval_model, reasoneval_tokenizer = load_reasoneval_model(args.reasoneval_path, args.reasoneval_model_size)
+            
+            print("Loading Math-Shepherd model...")
+            shepherd_tokenizer = AutoTokenizer.from_pretrained(args.shepherd_path)
+            shepherd_model = AutoModelForCausalLM.from_pretrained(
+                args.shepherd_path,
+                torch_dtype=torch.float16,
+                device_map="auto"
+            )
+            shepherd_model.eval()
+            evaluation_model_loaded = True
+        except Exception as e:
+            print(f"Warning: Failed to load evaluation models: {e}")
+            print("Continuing without evaluation...")
+            args.enable_evaluation = False
+
+        # Evaluate results
+        if evaluation_model_loaded:
+            for model_name, results_by_temperature in results_by_model.items():
+                model_output_dir = os.path.join(output_dir, model_name, dataset_name, f"random_probs_{args.reasoneval_model_size}")
+                logger = None
+                try:
+                    # Initialize wandb logger for this model
+                    if args.logger:
+                        args.name = f"{model_name}-{dataset_name}-Eval: {args.reasoneval_model_size}"
+                        args.tags = [
+                            f"Model:{model_name}",
+                            f"Dataset:{dataset_name}",
+                            f"ReasonEval:{args.reasoneval_model_size}",
+                        ]
+                        logger = wandb_logger(args)
+
+                    for temp, results in results_by_temperature.items():
+                        # Metrics for aggregation
+                        temp_accuracy_scores = []
+                        temp_validity_scores = []
+                        temp_redundancy_scores = []
+                        temp_shepherd_scores = []
+                        temp_avg_top1_probs = []
+                        temp_avg_top5_probs = []
+                        for result in tqdm(results, desc="Evaluating batches"):
                             # Evaluate solution if evaluation models are loaded
                             if args.enable_evaluation and reasoneval_model and shepherd_model:
                                 try:
                                     # Accuracy
-                                    temp_accuracy_scores.append(is_correct)
+                                    temp_accuracy_scores.append(result["is_correct"])
                                     
                                     # ReasonEval evaluation
                                     _, _, solution_validity, solution_redundancy = evaluate_solution_with_reasoneval(
-                                        reasoneval_model, reasoneval_tokenizer, question, solution_steps
+                                        reasoneval_model, reasoneval_tokenizer, result["question"], result["model_output_steps"]
                                     )
                                     
                                     # Math-Shepherd evaluation
                                     _, solution_shepherd_score = evaluate_solution_with_math_shepherd(
-                                        shepherd_model, shepherd_tokenizer, question, solution_steps
+                                        shepherd_model, shepherd_tokenizer, result["question"], result["model_output_steps"]
                                     )
                                     
                                     # Add evaluation scores to result
@@ -403,73 +448,48 @@ def main(args):
                                                     top1_probs.append(sorted_probs[0]['prob'])
                                                     top5_prob_sum = sum([p['prob'] for p in sorted_probs[:5]])
                                                     top5_probs.append(top5_prob_sum)
-                                        
                                         if top1_probs:
                                             avg_top1_prob = np.mean(top1_probs)
                                             avg_top5_prob = np.mean(top5_probs)
                                             temp_avg_top1_probs.append(avg_top1_prob)
                                             temp_avg_top5_probs.append(avg_top5_prob)
-                                        
-                                       
-                                        
                                 except Exception as e:
                                     print(f"Error evaluating solution {uuid}: {str(e)}")
-                            
-                            results.append(result)
-                            counter += 1
-                            
-                    except Exception as e:
-                        print(f"Error processing batch starting at index {i}: {str(e)}")
-                
-                # Log aggregated metrics for this temperature
-                if logger and temp_validity_scores:
-                    agg_metrics = {
-                        "accuracy": np.mean(temp_accuracy_scores),
-                        "avg_validity": np.mean(temp_validity_scores),
-                        "avg_redundancy": np.mean(temp_redundancy_scores),
-                        "avg_shepherd": np.mean(temp_shepherd_scores),
-                        "num_samples": len(temp_validity_scores)
-                    }
-                    
-                    if temp_avg_top1_probs:
-                        agg_metrics["avg_top1_prob"] = np.mean(temp_avg_top1_probs)
-                        agg_metrics["avg_top5_prob"] = np.mean(temp_avg_top5_probs)
-                    
-                    # Log with temperature as x-axis
-                    logger.log_temperature_metrics(agg_metrics, temp)
-                    
-                    print(f"Temperature {temp} - "
-                          f"Accuracy: {agg_metrics['accuracy']:.4f}, "
-                          f"Avg Validity: {agg_metrics['avg_validity']:.4f}, "
-                          f"Avg Redundancy: {agg_metrics['avg_redundancy']:.4f}, "
-                          f"Avg Shepherd: {agg_metrics['avg_shepherd']:.4f}")
-                
-                # Save results to file
-                output_path = os.path.join(model_output_dir, f"temperature_{temp}.json")
-                with open(output_path, 'w') as f:
-                    json.dump(results, f, indent=2)
-                
-                print(f"Results saved to {output_path}")
-        
-        except Exception as e:
-            print(f"Error processing model {model_name}: {str(e)}")
-            print("Continuing to next model...")
-        
-        finally:
-            if logger:
-                logger.finish()
-            
-            if model is not None:
-                try:
 
-                    del model
-                    # Force garbage collection
-                    import gc
-                    gc.collect()
-                    torch.cuda.empty_cache()
+                        # Save results to file
+                        output_path = os.path.join(model_output_dir, f"temperature_{temp}.json")
+                        with open(output_path, 'w') as f:
+                            json.dump(results, f, indent=2)
+                        print(f"Results saved to {output_path}")
 
-                except Exception as cleanup_error:
-                    print(f"Warning: Error during model cleanup for {model_name}: {cleanup_error}")
+                        # Log aggregated metrics for this temperature
+                        if logger and temp_validity_scores:
+                            agg_metrics = {
+                                "accuracy": np.mean(temp_accuracy_scores),
+                                "avg_validity": np.mean(temp_validity_scores),
+                                "avg_redundancy": np.mean(temp_redundancy_scores),
+                                "avg_shepherd": np.mean(temp_shepherd_scores),
+                                "num_samples": len(temp_validity_scores)
+                            }
+                            
+                            if temp_avg_top1_probs:
+                                agg_metrics["avg_top1_prob"] = np.mean(temp_avg_top1_probs)
+                                agg_metrics["avg_top5_prob"] = np.mean(temp_avg_top5_probs)
+                            
+                            # Log with temperature as x-axis
+                            logger.log_temperature_metrics(agg_metrics, temp)
+                            
+                            print(f"Temperature {temp} - "
+                                f"Accuracy: {agg_metrics['accuracy']:.4f}, "
+                                f"Avg Validity: {agg_metrics['avg_validity']:.4f}, "
+                                f"Avg Redundancy: {agg_metrics['avg_redundancy']:.4f}, "
+                                f"Avg Shepherd: {agg_metrics['avg_shepherd']:.4f}")
+                except Exception as e:
+                    print(f"Error evaluating model {model_name}: {str(e)}")
+                    print("Continuing to next model...")
+                finally:
+                    if logger:
+                        logger.finish()
 
 # Function to load a model with vLLM
 def load_model_with_vllm(model_path, dtype='half', tensor_parallel_size=None, gpu_memory_utilization=0.85, max_model_len=None):
