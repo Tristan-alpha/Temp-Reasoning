@@ -34,8 +34,10 @@ def generate_solutions_batch(model, model_name, questions, temperature, return_l
             prompt = f"Question: {question}\n\nProvide a step-by-step solution, and put your final answer within \\boxed{{}}."
         else:
             prompt = (
-                "Solve math problems step-by-step. You MUST end each COMPLETE step with a double newline (\\n\\n). "
-                "Please reason step by step, and put your final answer within \\boxed{}.\n\n"
+                "Solve math problems step-by-step.\n"
+                "You MUST end each COMPLETE step with a double newline (\\n\\n).\n"
+                "Please reason step by step, and put your final answer within \\boxed{}.\n"
+                "Write your solution according to the original question only, without inventing new answer choices.\n"
                 f"Question: {question}"
             )
         prompts.append(prompt)
