@@ -1,4 +1,5 @@
 # https://github.com/hendrycks/math/blob/985bdc1/modeling/math_equivalence.py
+# remove \text{} wrapper
 
 def _fix_fracs(string):
     substrs = string.split("\\frac")
@@ -134,6 +135,10 @@ def _strip_string(string):
 
     # NOTE: X/Y changed to \frac{X}{Y} in dataset, but in simple cases fix in case the model output is X/Y
     string = _fix_a_slash_b(string)
+
+    # remove \text{} wrapper
+    if string.startswith("\\text"):
+        string = string[len("\\text") + 1: -1]
 
     return string
 

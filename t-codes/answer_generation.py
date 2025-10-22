@@ -25,7 +25,7 @@ from evaluate_results import (
 
 
 # Function to generate solutions in batch with vLLM
-def generate_solutions_batch(model, model_name, questions, temperature, return_logprobs=False):
+def generate_solutions_batch(model, tokenizer, model_name, questions, temperature, return_logprobs=False):
     """Generate solutions for multiple questions in batch using vLLM"""
     # Prepare prompts for batch processing
     prompts = []
@@ -33,13 +33,29 @@ def generate_solutions_batch(model, model_name, questions, temperature, return_l
         if model_name == "Abel-7B-002" or model_name == "WizardMath-7B-V1.1":
             prompt = f"Question: {question}\n\nProvide a step-by-step solution, and put your final answer within \\boxed{{}}."
         else:
-            prompt = (
-                "Solve math problems step-by-step.\n"
-                "You MUST end each COMPLETE step with a double newline (\\n\\n).\n"
-                "Please reason step by step, and put your final answer within \\boxed{}.\n"
-                "Write your solution according to the original question only, without inventing new answer choices.\n"
-                f"Question: {question}"
-            )
+            messages = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a math reasoning assistant.\n"
+                        "\n"
+                        "Formatting rules:\n"
+                        "1. Solve math problems in a numbered list, one logical step per line.\n"
+                        "2. Each step must start with the step number and a period (e.g., '1.').\n"
+                        "3. Each step must be a complete sentence that describes one reasoning move.\n"
+                        "4. Inline LaTeX expressions should use $...$.\n"
+                        "5. The final numbered step must include the final boxed answer written as \\boxed{}.\n"
+                        "6. Do not include any explanations, headers, or summaries outside the numbered list.\n"
+                        "8. The response must end immediately after the final numbered step containing \\boxed{}.\n"
+                        "9. Do not include 'Step x:', horizontal rules, or any other formatting symbols.\n"
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": question,
+                },
+            ]
+            prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, enable_thinking=False)
         prompts.append(prompt)
     
     # vLLM batch generation
@@ -64,7 +80,7 @@ def generate_solutions_batch(model, model_name, questions, temperature, return_l
         )
 
     # Generate for all prompts at once
-    outputs = model.generate(prompts, sampling_params, use_tqdm=False)
+    outputs = model.generate(prompts, sampling_params)
     
     # Process outputs
     results = []
@@ -89,11 +105,12 @@ def generate_solutions_batch(model, model_name, questions, temperature, return_l
         
         # Format solution steps
         steps = format_solution_steps(solution, model_name)
+        answer = extract_boxed(solution)
         
         if return_logprobs:
-            results.append((steps, logprobs_info))
+            results.append((steps, answer, logprobs_info))
         else:
-            results.append(steps)
+            results.append((steps, answer))
     
     return results
 
@@ -115,21 +132,11 @@ def format_solution_steps(solution, model_name):
                     steps.append(f"Step {step_num}: {line}")
                     step_num += 1
     else:
-        # Check if we have reasonable step divisions from triple newlines
-        paragraphs = [p.strip() for p in re.split(r'\n\s*\n|\\n\s*\\n', solution) if p.strip()]
-        # Last resort: If no step structure is detected, use single newline as fallback
-        if len(paragraphs) <= 1:
-            paragraphs = [p.strip() for p in solution.split('\n') if p.strip()]
-        for i, paragraph in enumerate(paragraphs):
-            steps.append(f"Step {i+1}: {paragraph}")
-            # Truncate after the first \boxed{}, which marks the model’s final answer
-            if "\\boxed{" in paragraph:
-                break
-    
+        steps = [p.strip() for p in solution.split('\n') if re.match(r'^\d+\.\s', p)]
+
     return steps
 
 def dataset_extraction(item, dataset_name):
-
     if dataset_name == "hybrid_reasoning":
         source = item.get("source", "")
         if source == "math":
@@ -172,8 +179,8 @@ def load_json_data(file_path):
                     print(f"Warning: Could not parse line as JSON: {line[:50]}...")
     return dataset
 
-def extract_boxed_position(text: str):
-    start = text.find(r'\boxed{')
+def extract_boxed(text: str):
+    start = text.rfind(r'\boxed{')
     if start == -1:
         return None
     content_start = start + len(r'\boxed{')
@@ -186,7 +193,7 @@ def extract_boxed_position(text: str):
             brace_count -= 1
         i += 1
     if brace_count == 0:
-        return content_start, i - 1
+        return text[content_start : i - 1]
     return None
 
 def main(args):
@@ -247,7 +254,6 @@ def main(args):
         model = None  # Initialize model variable
 
         try:
-
             # Create model-specific directory
             model_output_dir = os.path.join(output_dir, model_name, dataset_name, f"random_probs_{args.reasoneval_model_size}")
             os.makedirs(model_output_dir, exist_ok=True)
@@ -262,6 +268,8 @@ def main(args):
                 max_model_len=args.max_model_len
             )
 
+            tokenizer = AutoTokenizer.from_pretrained(model_path)
+
             results_by_temperature = {}
 
             for temp in temperatures:
@@ -270,75 +278,51 @@ def main(args):
                 counter = 0
                 results = []
 
-                # Process in batches
-                for i in tqdm(range(0, len(dataset), args.batch_size), desc="Processing batches"):
-                    batch_items = dataset[i:i + args.batch_size]
+                questions = []
+                metadata = []
 
-                    batch_questions = []
-                    batch_metadata = []
+                for item in dataset:
+                    # print(f"Item type: {type(item)}")
+                    # print(f"Item content: {item}")
+                    # print(f"Dataset type: {type(dataset)}")
+                    # print(f"Batch_items type: {type(batch_items)}")
+                    question, uuid, source, answer = dataset_extraction(item, dataset_name)
+                    questions.append(question)
+                    metadata.append((uuid, source, answer))
 
-                    for item in batch_items:
-                        # print(f"Item type: {type(item)}")
-                        # print(f"Item content: {item}")
-                        # print(f"Dataset type: {type(dataset)}")
-                        # print(f"Batch_items type: {type(batch_items)}")
-                        question, uuid, source, answer = dataset_extraction(item, dataset_name)
-                        batch_questions.append(question)
-                        batch_metadata.append((uuid, source, answer))
+                raw_results = generate_solutions_batch(
+                    model,
+                    tokenizer,
+                    model_name,
+                    questions,
+                    temp,
+                    return_logprobs=args.enable_evaluation and args.log_token_probs,
+                )
+                for j, raw_result in enumerate(raw_results):
+                    uuid, source, answer = metadata[j]
+                    question = questions[j]
 
-                    try:
-                        # Generate solutions for the batch
-                        if args.enable_evaluation and args.log_token_probs:
-                            batch_results = generate_solutions_batch(
-                                model, model_name, batch_questions, temp, return_logprobs=True
-                            )
-                        else:
-                            batch_results = generate_solutions_batch(
-                                model, model_name, batch_questions, temp, return_logprobs=False
-                            )
+                    if args.enable_evaluation and args.log_token_probs:
+                        solution_steps, model_answer, logprobs_info = raw_result
+                    else:
+                        solution_steps, model_answer = raw_result
+                        logprobs_info = None
 
-                        # Process each result in the batch
-                        for j, batch_result in enumerate(batch_results):
-                            uuid, source, answer = batch_metadata[j]
-                            question = batch_questions[j]
+                    is_correct = is_equiv(answer, model_answer)
 
-                            if args.enable_evaluation and args.log_token_probs:
-                                solution_steps, logprobs_info = batch_result
-                            else:
-                                solution_steps = batch_result
-                                logprobs_info = None
+                    # Create result object
+                    result = {
+                        "uuid": uuid,
+                        "source": source,
+                        "question": question,
+                        "answer": answer,
+                        "model_answer": model_answer,
+                        "is_correct": is_correct,
+                        "model_output_steps": solution_steps,
+                    }
 
-                            if solution_steps:
-                                final_step = solution_steps[-1]
-                                boxed_pos = extract_boxed_position(final_step)
-                                if boxed_pos:
-                                    model_answer = final_step[boxed_pos[0] : boxed_pos[1]]
-                                    lf_pos = final_step.find("\n", boxed_pos[1])
-                                    if lf_pos != -1:
-                                        solution_steps[-1] = final_step[:lf_pos]
-                                else:
-                                    model_answer = None
-                            else:
-                                model_answer = None
-
-                            is_correct = is_equiv(answer, model_answer)
-
-                            # Create result object
-                            result = {
-                                "uuid": uuid,
-                                "source": source,
-                                "question": question,
-                                "answer": answer,
-                                "model_answer": model_answer,
-                                "is_correct": is_correct,
-                                "model_output_steps": solution_steps,
-                            }
-
-                            results.append(result)
-                            counter += 1
-
-                    except Exception as e:
-                        print(f"Error processing batch starting at index {i}: {str(e)}")
+                    results.append(result)
+                    counter += 1
 
                 # Save results for evaluation
                 results_by_temperature[temp] = results
@@ -501,7 +485,7 @@ def main(args):
                         logger.finish()
 
 # Function to load a model with vLLM
-def load_model_with_vllm(model_path, dtype='half', tensor_parallel_size=None, gpu_memory_utilization=0.85, max_model_len=None):
+def load_model_with_vllm(model_path, dtype="auto", tensor_parallel_size=None, gpu_memory_utilization=0.85, max_model_len=None):
     """Load a model with vLLM for optimized inference across multiple GPUs"""
     try:
         torch.cuda.empty_cache()
@@ -546,7 +530,7 @@ if __name__ == "__main__":
     parser.add_argument("--gpu_memory_utilization", type=float, default=0.9,
                         help="Fraction of GPU memory to use (0.0 to 1.0)")
     parser.add_argument("--vllm_dtype", type=str, default="half", 
-                        choices=["half", "float16", "bfloat16", "float"],
+                        choices=["auto", "half", "float16", "bfloat16", "float"],
                         help="Data type for vLLM inference")
     parser.add_argument("--max_model_len", type=int, default=8192,
                         help="Maximum sequence length for the model")
