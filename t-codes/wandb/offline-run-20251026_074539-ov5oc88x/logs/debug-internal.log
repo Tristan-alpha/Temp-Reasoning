@@ -1,0 +1,16 @@
+{"time":"2025-10-26T07:45:39.199001309+08:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/data/dazhou/ReasonEval/t-codes/wandb/offline-run-20251026_074539-ov5oc88x/logs/debug-core.log"}
+{"time":"2025-10-26T07:45:39.41427964+08:00","level":"WARN","msg":"GraphQL client is nil, skipping feature loading"}
+{"time":"2025-10-26T07:45:39.414437485+08:00","level":"INFO","msg":"stream: created new stream","id":"ov5oc88x"}
+{"time":"2025-10-26T07:45:39.414483071+08:00","level":"INFO","msg":"handler: started","stream_id":"ov5oc88x"}
+{"time":"2025-10-26T07:45:39.414538359+08:00","level":"INFO","msg":"writer: Do: started","stream_id":"ov5oc88x"}
+{"time":"2025-10-26T07:45:39.414544558+08:00","level":"INFO","msg":"stream: started","id":"ov5oc88x"}
+{"time":"2025-10-26T07:45:39.414560751+08:00","level":"INFO","msg":"sender: started","stream_id":"ov5oc88x"}
+{"time":"2025-10-26T07:45:39.417858268+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-10-26T08:36:51.518391057+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-10-26T08:36:51.518501044+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-10-26T08:36:51.519174846+08:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-10-26T08:36:51.521087716+08:00","level":"INFO","msg":"stream: closing","id":"ov5oc88x"}
+{"time":"2025-10-26T08:36:51.521108776+08:00","level":"INFO","msg":"handler: closed","stream_id":"ov5oc88x"}
+{"time":"2025-10-26T08:36:51.521122996+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":"ov5oc88x"}
+{"time":"2025-10-26T08:36:51.521127723+08:00","level":"INFO","msg":"sender: closed","stream_id":"ov5oc88x"}
+{"time":"2025-10-26T08:36:51.521229759+08:00","level":"INFO","msg":"stream: closed","id":"ov5oc88x"}

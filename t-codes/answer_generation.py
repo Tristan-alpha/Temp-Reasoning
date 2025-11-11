@@ -267,8 +267,7 @@ def main(args):
                 gpu_memory_utilization=args.gpu_memory_utilization,
                 max_model_len=args.max_model_len
             )
-
-            tokenizer = AutoTokenizer.from_pretrained(model_path)
+            tokenizer = model.get_tokenizer()
 
             results_by_temperature = {}
 

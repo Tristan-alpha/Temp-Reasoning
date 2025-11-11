@@ -33,14 +33,14 @@ def load_model_with_vllm(model_path, dtype="auto", tensor_parallel_size=None, gp
         torch.cuda.empty_cache()
         raise
 
-tokenizer = AutoTokenizer.from_pretrained(model_path)
-
 model = load_model_with_vllm(
     model_path=model_path,
     tensor_parallel_size=tensor_parallel_size,
     gpu_memory_utilization=0.9,
     max_model_len=38912,
 )
+
+tokenizer = model.get_tokenizer()
 
 sampling_params = SamplingParams(
     temperature=temperature,

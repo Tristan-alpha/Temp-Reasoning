@@ -5,7 +5,7 @@
 export CUDA_VISIBLE_DEVICES=1,2,3,4 # Specify the GPUs to use
 
 # Set parameters
-DATASET_NAME="math-1"  # or "aime"
+DATASET_NAME="math-5"  # or "aime"
 MODELS=(
     # "WizardMath-7B-V1.1" 
     # "Abel-7B-002"
