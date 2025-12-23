@@ -25,7 +25,7 @@ from evaluate_results import (
 
 
 # Function to generate solutions in batch with vLLM
-def generate_solutions_batch(model, tokenizer, model_name, questions, temperature, return_logprobs=False):
+def generate_solutions_batch(model, tokenizer, model_name, questions, temperature, max_model_len, return_logprobs=False):
     """Generate solutions for multiple questions in batch using vLLM"""
     # Prepare prompts for batch processing
     prompts = []
@@ -40,14 +40,15 @@ def generate_solutions_batch(model, tokenizer, model_name, questions, temperatur
                         "You are a math reasoning assistant.\n"
                         "\n"
                         "Formatting rules:\n"
-                        "1. Solve math problems in a numbered list, one logical step per line.\n"
-                        "2. Each step must start with the step number and a period (e.g., '1.').\n"
-                        "3. Each step must be a complete sentence that describes one reasoning move.\n"
-                        "4. Inline LaTeX expressions should use $...$.\n"
-                        "5. The final numbered step must include the final boxed answer written as \\boxed{}.\n"
-                        "6. Do not include any explanations, headers, or summaries outside the numbered list.\n"
-                        "8. The response must end immediately after the final numbered step containing \\boxed{}.\n"
-                        "9. Do not include 'Step x:', horizontal rules, or any other formatting symbols.\n"
+                        "- Solve the problem step by step.\n"
+                        "- Each step must be written as a separate paragraph.\n"
+                        "- Separate every step with exactly two newline characters.\n"
+                        "- Do not use numbering, bullets, or any markers at the start of a step.\n"
+                        "- Each step must be a complete sentence that describes one reasoning move.\n"
+                        "- Inline LaTeX expressions should use $...$.\n"
+                        "- The final paragraph must include the final boxed answer written as \\boxed{}.\n"
+                        "- Do not include any explanations, headers, or summaries outside the steps.\n"
+                        "- The response must end immediately after the final paragraph containing \\boxed{}.\n"
                     ),
                 },
                 {
@@ -62,7 +63,7 @@ def generate_solutions_batch(model, tokenizer, model_name, questions, temperatur
     if temperature == 0:
         sampling_params = SamplingParams(
             temperature=0.0,
-            max_tokens=38912,
+            max_tokens=max_model_len,
             # use_beam_search=False,
             top_p=1.0,
             top_k=-1,
@@ -72,7 +73,7 @@ def generate_solutions_batch(model, tokenizer, model_name, questions, temperatur
     else:
         sampling_params = SamplingParams(
             temperature=temperature,
-            max_tokens=38912,
+            max_tokens=max_model_len,
             top_p=1.0,
             top_k=-1,
             skip_special_tokens=True,
@@ -132,7 +133,10 @@ def format_solution_steps(solution, model_name):
                     steps.append(f"Step {step_num}: {line}")
                     step_num += 1
     else:
-        steps = [p.strip() for p in solution.split('\n') if re.match(r'^\d+\.\s', p)]
+        # Split by double newline into paragraphs (each paragraph = one step)
+        raw_steps = re.split(r'\n\s*\n', solution)
+        # Clean and keep only non-empty paragraphs
+        steps = [p.strip() for p in raw_steps if p.strip()]
 
     return steps
 
@@ -295,6 +299,7 @@ def main(args):
                     model_name,
                     questions,
                     temp,
+                    args.max_model_len,
                     return_logprobs=args.enable_evaluation and args.log_token_probs,
                 )
                 for j, raw_result in enumerate(raw_results):
@@ -327,7 +332,7 @@ def main(args):
                 results_by_temperature[temp] = results
 
                 # Save results to file
-                output_path = os.path.join(model_output_dir, f"temperature_{temp}.json")
+                output_path = os.path.join(model_output_dir, f"raw_temperature_{temp}.json")
                 with open(output_path, 'w') as f:
                     json.dump(results, f, indent=2)
                 print(f"Results saved to {output_path}")
@@ -403,6 +408,8 @@ def main(args):
                             # Evaluate solution if evaluation models are loaded
                             if args.enable_evaluation and reasoneval_model and shepherd_model:
                                 try:
+                                    uuid = result["uuid"]
+
                                     # Accuracy
                                     temp_accuracy_scores.append(result["is_correct"])
 
@@ -447,6 +454,8 @@ def main(args):
                                             temp_avg_top5_probs.append(avg_top5_prob)
                                 except Exception as e:
                                     print(f"Error evaluating solution {uuid}: {str(e)}")
+                                    import traceback
+                                    traceback.print_exception(e)
 
                         # Save results to file
                         output_path = os.path.join(model_output_dir, f"temperature_{temp}.json")

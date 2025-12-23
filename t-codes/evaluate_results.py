@@ -218,7 +218,7 @@ def evaluate_solution_with_math_shepherd(model, tokenizer, question, reasoning_s
         
         # If no step tags were found
         if len(step_tag_positions) == 0:
-            return 0.0  # Return a default score
+            return [], 0.0  # Return a default score
             
         # Get scores at step tag positions
         step_scores = scores[0, step_tag_positions]
